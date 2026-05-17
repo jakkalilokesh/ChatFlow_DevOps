@@ -1,0 +1,78 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: libretranslate-pvc
+  namespace: production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: libretranslate
+  namespace: production
+  labels:
+    app: libretranslate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: libretranslate
+  template:
+    metadata:
+      labels:
+        app: libretranslate
+    spec:
+      containers:
+        - name: libretranslate
+          image: libretranslate/libretranslate:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: LT_LOAD_ONLY
+              value: "en,es,fr,de,zh,ar,hi,pt,ja,ko,ru"
+          volumeMounts:
+            - name: lt-storage
+              mountPath: /home/libretranslate
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /languages
+              port: 5000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /languages
+              port: 5000
+            initialDelaySeconds: 150
+            periodSeconds: 30
+      volumes:
+        - name: lt-storage
+          persistentVolumeClaim:
+            claimName: libretranslate-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: libretranslate
+  namespace: production
+spec:
+  selector:
+    app: libretranslate
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP

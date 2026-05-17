@@ -1,0 +1,307 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION       = 'us-east-1'
+        AWS_ACCOUNT_ID   = credentials('aws-account-id')
+        ECR_REGISTRY     = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_TAG        = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
+        PROJECT          = 'chat-app'
+        KUBECONFIG       = credentials('kubeconfig')
+        SERVICES         = 'frontend auth-service chat-service user-service notification-service'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 60, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    currentBuild.description = "Branch: ${GIT_BRANCH} | Commit: ${GIT_COMMIT.take(7)}"
+                }
+            }
+        }
+
+        stage('Set Build Info') {
+            steps {
+                script {
+                    def commit = sh(script: 'git log -1 --pretty=format:"%s by %an"', returnStdout: true).trim()
+                    currentBuild.description = "Branch: ${GIT_BRANCH} | ${commit}"
+                    echo "Building image tag: ${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Lint & Validate') {
+            parallel {
+                stage('Lint Frontend') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm install --quiet'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                stage('Lint Auth Service') {
+                    steps {
+                        dir('auth-service') {
+                            sh 'npm install --quiet'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                stage('Lint Chat Service') {
+                    steps {
+                        dir('chat-service') {
+                            sh 'npm install --quiet'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                stage('Lint User Service') {
+                    steps {
+                        dir('user-service') {
+                            sh 'npm install --quiet'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                stage('Lint Notification Service') {
+                    steps {
+                        dir('notification-service') {
+                            sh 'npm install --quiet'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            parallel {
+                stage('Test Frontend') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm test -- --watchAll=false --passWithNoTests'
+                        }
+                    }
+                }
+                stage('Test Auth Service') {
+                    steps {
+                        dir('auth-service') {
+                            sh 'npm test'
+                        }
+                    }
+                }
+                stage('Test Chat Service') {
+                    steps {
+                        dir('chat-service') {
+                            sh 'npm test'
+                        }
+                    }
+                }
+                stage('Test User Service') {
+                    steps {
+                        dir('user-service') {
+                            sh 'npm test'
+                        }
+                    }
+                }
+                stage('Test Notification Service') {
+                    steps {
+                        dir('notification-service') {
+                            sh 'npm test'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            parallel {
+                stage('Build Frontend') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-frontend:${IMAGE_TAG} ./frontend/"
+                    }
+                }
+                stage('Build Auth Service') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-auth-service:${IMAGE_TAG} ./auth-service/"
+                    }
+                }
+                stage('Build Chat Service') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-chat-service:${IMAGE_TAG} ./chat-service/"
+                    }
+                }
+                stage('Build User Service') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-user-service:${IMAGE_TAG} ./user-service/"
+                    }
+                }
+                stage('Build Notification Service') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-notification-service:${IMAGE_TAG} ./notification-service/"
+                    }
+                }
+                stage('Build Call Service') {
+                    steps {
+                        sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
+                    }
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                script {
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
+                    services.each { svc ->
+                        sh """
+                            docker run --rm \
+                              -v /var/run/docker.sock:/var/run/docker.sock \
+                              aquasec/trivy:latest image \
+                              --exit-code 0 \
+                              --severity HIGH,CRITICAL \
+                              --no-progress \
+                              --format table \
+                              ${PROJECT}-${svc}:${IMAGE_TAG} || true
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                script {
+                    // ECR login
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                    """
+
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
+                    services.each { svc ->
+                        def localTag  = "${PROJECT}-${svc}:${IMAGE_TAG}"
+                        def remoteTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:${IMAGE_TAG}"
+                        def latestTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:latest"
+
+                        sh """
+                            docker tag  ${localTag} ${remoteTag}
+                            docker tag  ${localTag} ${latestTag}
+                            docker push ${remoteTag}
+                            docker push ${latestTag}
+                        """
+                        echo "Pushed ${remoteTag}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'staging'
+            }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG_FILE
+                        bash scripts/deploy.sh staging ${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Integration Tests') {
+            when {
+                branch 'staging'
+            }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG_FILE
+                        bash scripts/health-check.sh staging
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    input message: "Deploy ${IMAGE_TAG} to production?", ok: 'Deploy Now'
+                }
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG_FILE
+                        bash scripts/deploy.sh production ${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Health Check') {
+            when {
+                anyOf { branch 'main'; branch 'staging' }
+            }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG_FILE
+                        NAMESPACE=\$([ "${GIT_BRANCH}" = "main" ] && echo "production" || echo "staging")
+                        bash scripts/health-check.sh \$NAMESPACE
+                    """
+                }
+            }
+        }
+
+        stage('Notify') {
+            steps {
+                script {
+                    def namespace = (env.GIT_BRANCH == 'main') ? 'production' : 'staging'
+                    echo """
+                    ============================================
+                    ✅ ChatFlow Deployment Complete!
+                    Branch:    ${GIT_BRANCH}
+                    Tag:       ${IMAGE_TAG}
+                    Namespace: ${namespace}
+                    ============================================
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker image prune -f || true'
+            cleanWs()
+        }
+        failure {
+            script {
+                echo "❌ Build failed — triggering rollback..."
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=\$KUBECONFIG_FILE
+                        NAMESPACE=\$([ "${GIT_BRANCH}" = "main" ] && echo "production" || echo "staging")
+                        bash scripts/rollback.sh \$NAMESPACE || true
+                    """
+                }
+            }
+        }
+        success {
+            echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
+        }
+    }
+}

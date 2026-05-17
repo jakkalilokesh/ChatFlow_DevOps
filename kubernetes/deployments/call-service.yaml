@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: call-service
+  namespace: production
+  labels:
+    app: call-service
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: call-service
+  template:
+    metadata:
+      labels:
+        app: call-service
+    spec:
+      containers:
+        - name: call-service
+          image: ${ECR_REGISTRY}/chat-app-call-service:latest
+          ports:
+            - containerPort: 3005
+              protocol: TCP
+            - containerPort: 40000
+              hostPort: 40000
+              protocol: UDP
+          env:
+            - name: CALL_SERVICE_PORT
+              value: "3005"
+            - name: ANNOUNCED_IP
+              valueFrom:
+                configMapKeyRef:
+                  name: chatflow-config
+                  key: K3S_ELASTIC_IP
+            - name: REDIS_HOST
+              value: redis-service
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: chatflow-secrets
+                  key: REDIS_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: chatflow-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3005
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3005
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: call-service
+  namespace: production
+spec:
+  selector:
+    app: call-service
+  ports:
+    - name: http
+      port: 3005
+      targetPort: 3005
+      nodePort: 30005
+  type: NodePort

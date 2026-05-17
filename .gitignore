@@ -1,0 +1,142 @@
+# ========================
+# Node.js
+# ========================
+node_modules/
+dist/
+build/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+logs/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# ========================
+# Environment Variables
+# ========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ========================
+# Terraform
+# ========================
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
+
+# ========================
+# Docker
+# ========================
+docker-compose.override.yml
+*.tar
+
+# ========================
+# Kubernetes
+# ========================
+kubeconfig
+kubeconfig.yaml
+*.secret.yaml
+*.secrets.yaml
+
+# ========================
+# Ansible
+# ========================
+ansible/vault/*.yml
+ansible/*.retry
+*.retry
+
+# ========================
+# IDE & Editors
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.history/
+
+# ========================
+# OS Files
+# ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ========================
+# Testing
+# ========================
+coverage/
+.nyc_output/
+junit.xml
+test-results/
+
+# ========================
+# Build artifacts
+# ========================
+*.pid
+*.seed
+*.pid.lock
+lib-cov/
+.grunt/
+bower_components/
+.lock-wscript/
+jspm_packages/
+typings/
+
+# ========================
+# Backup files
+# ========================
+backup/
+*.backup
+*.bak
+*.sql.gz
+*.dump
+
+# ========================
+# Certificates & Keys
+# ========================
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# ========================
+# Misc
+# ========================
+*.tmp
+tmp/
+temp/
+.cache/
