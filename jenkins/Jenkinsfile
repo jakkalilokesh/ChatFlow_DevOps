@@ -196,25 +196,13 @@ pipeline {
                         bash scripts/rollback.sh \$NAMESPACE || true
                     """
                 }
-                try {
-                    mail to: 'jakkalilokesh@gmail.com',
-                         subject: "❌ FAILED: ChatFlow Deployment - ${IMAGE_TAG}",
-                         body: "The deployment of ChatFlow (${IMAGE_TAG}) FAILED.\n\nA rollback has been triggered.\n\nCheck the Jenkins console for more details: ${env.BUILD_URL}"
-                } catch (Exception e) {
-                    echo "⚠️ Failed to send failure email: ${e.message}"
-                }
+                echo "⚠️ Email notification skipped: SMTP not configured."
             }
         }
         success {
             script {
                 echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
-                try {
-                    mail to: 'jakkalilokesh@gmail.com',
-                         subject: "✅ SUCCESS: ChatFlow Deployment - ${IMAGE_TAG}",
-                         body: "The deployment of ChatFlow (${IMAGE_TAG}) was SUCCESSFUL.\n\nAll services passed health checks and are running perfectly.\n\nCheck the Jenkins console for more details: ${env.BUILD_URL}"
-                } catch (Exception e) {
-                    echo "⚠️ Failed to send success email: ${e.message}"
-                }
+                echo "⚠️ Email notification skipped: SMTP not configured."
             }
         }
         cleanup {
