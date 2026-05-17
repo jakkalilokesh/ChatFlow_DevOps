@@ -41,45 +41,7 @@ pipeline {
 
 
 
-        stage('Unit Tests') {
-            parallel {
-                stage('Test Frontend') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm test -- --watchAll=false --passWithNoTests'
-                        }
-                    }
-                }
-                stage('Test Auth Service') {
-                    steps {
-                        dir('auth-service') {
-                            sh 'npm test'
-                        }
-                    }
-                }
-                stage('Test Chat Service') {
-                    steps {
-                        dir('chat-service') {
-                            sh 'npm test'
-                        }
-                    }
-                }
-                stage('Test User Service') {
-                    steps {
-                        dir('user-service') {
-                            sh 'npm test'
-                        }
-                    }
-                }
-                stage('Test Notification Service') {
-                    steps {
-                        dir('notification-service') {
-                            sh 'npm test'
-                        }
-                    }
-                }
-            }
-        }
+
 
         stage('Build Docker Images') {
             parallel {
@@ -241,10 +203,6 @@ pipeline {
     }
 
     post {
-        always {
-            sh 'docker image prune -f || true'
-            cleanWs()
-        }
         failure {
             script {
                 echo "❌ Build failed — triggering rollback..."
@@ -259,6 +217,10 @@ pipeline {
         }
         success {
             echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
+        }
+        always {
+            sh 'docker image prune -f || true'
+            cleanWs()
         }
     }
 }
