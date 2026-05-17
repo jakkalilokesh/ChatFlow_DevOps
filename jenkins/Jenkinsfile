@@ -60,9 +60,6 @@ pipeline {
 
                     echo "Building Notification Service..."
                     sh "docker build -t ${PROJECT}-notification-service:${IMAGE_TAG} ./notification-service/"
-
-                    echo "Building Call Service..."
-                    sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
                 }
             }
         }
@@ -70,7 +67,7 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service']
                     services.each { svc ->
                         sh """
                             docker run --rm \
@@ -96,7 +93,7 @@ pipeline {
                         docker login --username AWS --password-stdin ${ECR_REGISTRY}
                     """
 
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service']
                     services.each { svc ->
                         def localTag  = "${PROJECT}-${svc}:${IMAGE_TAG}"
                         def remoteTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:${IMAGE_TAG}"

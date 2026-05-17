@@ -11,7 +11,6 @@ SERVICES=(
   "chat-service"
   "user-service"
   "notification-service"
-  "call-service"
 )
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }

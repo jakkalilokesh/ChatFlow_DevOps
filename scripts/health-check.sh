@@ -15,7 +15,6 @@ SERVICES=(
   "chat-service:3002"
   "user-service:3003"
   "notification-service:3004"
-  "call-service:3005"
   "frontend:3000"
 )
 
