@@ -199,17 +199,25 @@ pipeline {
                         bash scripts/rollback.sh \$NAMESPACE || true
                     """
                 }
-                mail to: 'jakkalilokesh@gmail.com',
-                     subject: "❌ ChatFlow Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                     body: "The Jenkins pipeline failed. A rollback has been triggered.\n\nCheck the console output here: ${env.BUILD_URL}"
+                try {
+                    mail to: 'jakkalilokesh@gmail.com',
+                         subject: "❌ ChatFlow Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                         body: "The Jenkins pipeline failed. A rollback has been triggered.\n\nCheck the console output here: ${env.BUILD_URL}"
+                } catch (Exception e) {
+                    echo "⚠️ Could not send failure email (SMTP not configured): ${e.message}"
+                }
             }
         }
         success {
             script {
                 echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
-                mail to: 'jakkalilokesh@gmail.com',
-                     subject: "✅ ChatFlow Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                     body: "The Jenkins pipeline completed successfully! ChatFlow is now deployed to the cluster.\n\nView the build here: ${env.BUILD_URL}"
+                try {
+                    mail to: 'jakkalilokesh@gmail.com',
+                         subject: "✅ ChatFlow Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                         body: "The Jenkins pipeline completed successfully! ChatFlow is now deployed to the cluster.\n\nView the build here: ${env.BUILD_URL}"
+                } catch (Exception e) {
+                    echo "⚠️ Could not send success email (SMTP not configured): ${e.message}"
+                }
             }
         }
         cleanup {
