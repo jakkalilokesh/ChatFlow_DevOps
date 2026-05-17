@@ -141,7 +141,7 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                anyOf { branch 'main'; branch 'origin/main' }
+                expression { env.GIT_BRANCH == 'main' || env.GIT_BRANCH == 'origin/main' }
             }
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -158,7 +158,7 @@ pipeline {
 
         stage('Health Check') {
             when {
-                anyOf { branch 'main'; branch 'origin/main'; branch 'staging'; branch 'origin/staging' }
+                expression { env.GIT_BRANCH == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'staging' || env.GIT_BRANCH == 'origin/staging' }
             }
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
@@ -199,25 +199,13 @@ pipeline {
                         bash scripts/rollback.sh \$NAMESPACE || true
                     """
                 }
-                try {
-                    mail to: 'jakkalilokesh@gmail.com',
-                         subject: "❌ ChatFlow Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                         body: "The Jenkins pipeline failed. A rollback has been triggered.\n\nCheck the console output here: ${env.BUILD_URL}"
-                } catch (Exception e) {
-                    echo "⚠️ Could not send failure email (SMTP not configured): ${e.message}"
-                }
+                echo "⚠️ Email notification skipped: SMTP not configured."
             }
         }
         success {
             script {
                 echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
-                try {
-                    mail to: 'jakkalilokesh@gmail.com',
-                         subject: "✅ ChatFlow Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                         body: "The Jenkins pipeline completed successfully! ChatFlow is now deployed to the cluster.\n\nView the build here: ${env.BUILD_URL}"
-                } catch (Exception e) {
-                    echo "⚠️ Could not send success email (SMTP not configured): ${e.message}"
-                }
+                echo "⚠️ Email notification skipped: SMTP not configured."
             }
         }
         cleanup {
