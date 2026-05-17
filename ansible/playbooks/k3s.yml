@@ -1,16 +1,15 @@
 ---
+- import_playbook: common.yml
+
 - name: Setup k3s Kubernetes node
   hosts: k3s
   become: true
 
   vars:
     k3s_version: "v1.30.1+k3s1"
-    kubeconfig_local_path: "{{ lookup('env', 'HOME') }}/.kube/chatflow-k3s.yaml"
+    kubeconfig_local_path: "/app/ansible/chatflow-k3s.yaml"
 
   tasks:
-    - name: Run common baseline setup
-      import_playbook: common.yml
-
     - name: Install k3s with custom flags (no traefik, writable kubeconfig)
       shell: |
         curl -sfL https://get.k3s.io | \
@@ -49,24 +48,7 @@
         regexp: 'https://127\.0\.0\.1:6443'
         replace: "https://{{ ansible_host }}:6443"
 
-    - name: Install Docker CE (for local image builds if needed)
-      block:
-        - apt:
-            name:
-              - docker-ce
-              - docker-ce-cli
-              - containerd.io
-              - docker-buildx-plugin
-            state: present
-            update_cache: true
-        - systemd:
-            name: docker
-            state: started
-            enabled: true
-        - user:
-            name: ubuntu
-            groups: docker
-            append: true
+
 
     - name: Allow required ports through UFW
       ufw:
