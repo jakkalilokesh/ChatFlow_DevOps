@@ -144,9 +144,6 @@ pipeline {
                 expression { env.GIT_BRANCH == 'main' || env.GIT_BRANCH == 'origin/main' }
             }
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    input message: "Deploy ${IMAGE_TAG} to production?", ok: 'Deploy Now'
-                }
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh """
                         export KUBECONFIG=\$KUBECONFIG_FILE
