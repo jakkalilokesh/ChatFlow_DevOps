@@ -11,7 +11,7 @@ import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
 
-const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost';
+const WS_URL = process.env.REACT_APP_WS_URL || '';
 
 export function SocketProvider({ children }) {
   const { user } = useAuth();
