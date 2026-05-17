@@ -141,7 +141,7 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                branch 'main'
+                anyOf { branch 'main'; branch 'origin/main' }
             }
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -158,13 +158,13 @@ pipeline {
 
         stage('Health Check') {
             when {
-                anyOf { branch 'main'; branch 'staging' }
+                anyOf { branch 'main'; branch 'origin/main'; branch 'staging'; branch 'origin/staging' }
             }
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh """
                         export KUBECONFIG=\$KUBECONFIG_FILE
-                        NAMESPACE=\$([ "${GIT_BRANCH}" = "main" ] && echo "production" || echo "staging")
+                        NAMESPACE=\$([ "\${GIT_BRANCH}" = "main" ] || [ "\${GIT_BRANCH}" = "origin/main" ] && echo "production" || echo "staging")
                         bash scripts/health-check.sh \$NAMESPACE
                     """
                 }
@@ -174,7 +174,7 @@ pipeline {
         stage('Notify') {
             steps {
                 script {
-                    def namespace = (env.GIT_BRANCH == 'main') ? 'production' : 'staging'
+                    def namespace = (env.GIT_BRANCH == 'main' || env.GIT_BRANCH == 'origin/main') ? 'production' : 'staging'
                     echo """
                     ============================================
                     ✅ ChatFlow Deployment Complete!
@@ -195,14 +195,22 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh """
                         export KUBECONFIG=\$KUBECONFIG_FILE
-                        NAMESPACE=\$([ "${GIT_BRANCH}" = "main" ] && echo "production" || echo "staging")
+                        NAMESPACE=\$([ "\${GIT_BRANCH}" = "main" ] || [ "\${GIT_BRANCH}" = "origin/main" ] && echo "production" || echo "staging")
                         bash scripts/rollback.sh \$NAMESPACE || true
                     """
                 }
+                mail to: 'jakkalilokesh@gmail.com',
+                     subject: "❌ ChatFlow Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                     body: "The Jenkins pipeline failed. A rollback has been triggered.\n\nCheck the console output here: ${env.BUILD_URL}"
             }
         }
         success {
-            echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
+            script {
+                echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
+                mail to: 'jakkalilokesh@gmail.com',
+                     subject: "✅ ChatFlow Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                     body: "The Jenkins pipeline completed successfully! ChatFlow is now deployed to the cluster.\n\nView the build here: ${env.BUILD_URL}"
+            }
         }
         cleanup {
             sh 'docker image prune -f || true'
