@@ -20,6 +20,7 @@ SERVICES=(
 
 log "=== ChatFlow Health Check ==="
 log "Namespace: ${NAMESPACE}"
+kubectl config set-cluster default --insecure-skip-tls-verify=true --kubeconfig="$KUBECONFIG" 2>/dev/null || true
 
 # Check pods are all Running
 log "Checking pod status..."

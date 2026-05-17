@@ -33,6 +33,14 @@ log "=== ChatFlow Deploy ==="
 log "Namespace: ${NAMESPACE}"
 log "Image Tag: ${IMAGE_TAG}"
 
+# Bypass TLS validation for Jenkins CI and create ECR Image Pull Secret
+log "Configuring Kubernetes TLS and generating ECR pull secret..."
+kubectl config set-cluster default --insecure-skip-tls-verify=true --kubeconfig="$KUBECONFIG" 2>/dev/null || true
+aws ecr get-login-password --region "${AWS_REGION}" | kubectl create secret docker-registry ecr-secret \
+  --docker-server="${ECR_REGISTRY}" \
+  --docker-username=AWS \
+  --docker-password-stdin -n "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+
 # Apply ConfigMap and base manifests
 log "Applying namespace and config..."
 kubectl apply -f kubernetes/namespaces/namespaces.yaml --validate=false || true

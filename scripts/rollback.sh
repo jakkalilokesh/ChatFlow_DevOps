@@ -18,6 +18,7 @@ err() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $*" >&2; }
 
 log "=== ChatFlow Rollback to previous revision ==="
 log "Namespace: ${NAMESPACE}"
+kubectl config set-cluster default --insecure-skip-tls-verify=true --kubeconfig="$KUBECONFIG" 2>/dev/null || true
 
 for svc in "${SERVICES[@]}"; do
   log "Rolling back ${svc}..."
