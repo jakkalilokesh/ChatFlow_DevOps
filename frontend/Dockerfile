@@ -6,7 +6,7 @@ WORKDIR /app
 # Install dependencies first (layer caching)
 COPY package.json package-lock.json* ./
 # npm ci installs devDeps by default (needed for react-scripts build)
-RUN npm ci
+RUN npm ci 2>/dev/null || npm install
 
 # Copy source and build
 COPY public/ ./public/

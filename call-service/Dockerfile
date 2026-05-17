@@ -1,7 +1,7 @@
 # mediasoup requires build tools (python3, make, g++) to compile native bindings
 FROM node:20-alpine AS deps
 
-RUN apk add --no-cache python3 make g++ linux-headers
+RUN apk add --no-cache python3 py3-pip make g++ linux-headers
 
 WORKDIR /app
 

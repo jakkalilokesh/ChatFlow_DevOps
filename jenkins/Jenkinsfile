@@ -218,7 +218,7 @@ pipeline {
         success {
             echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
         }
-        always {
+        cleanup {
             sh 'docker image prune -f || true'
             cleanWs()
         }
