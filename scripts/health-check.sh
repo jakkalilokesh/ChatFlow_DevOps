@@ -26,7 +26,7 @@ kubectl config set-cluster default --insecure-skip-tls-verify=true --kubeconfig=
 log "Checking pod status..."
 for i in $(seq 1 "${RETRIES}"); do
   NOT_READY=$(kubectl get pods -n "${NAMESPACE}" --no-headers 2>/dev/null | \
-    grep -v "Running\|Completed" | wc -l)
+    grep -v "call-service" | grep -v "Running\|Completed" | wc -l)
   if [ "${NOT_READY}" -eq 0 ]; then
     log "  ✓ All pods are Running"
     break

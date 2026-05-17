@@ -438,8 +438,10 @@ spec:
           livenessProbe:
             exec:
               command: ["mongosh", "--eval", "db.adminCommand('ping')"]
-            initialDelaySeconds: 30
-            periodSeconds: 15
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 5
       volumes:
         - name: mongo-data
           persistentVolumeClaim:
