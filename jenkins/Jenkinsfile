@@ -44,36 +44,25 @@ pipeline {
 
 
         stage('Build Docker Images') {
-            parallel {
-                stage('Build Frontend') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-frontend:${IMAGE_TAG} ./frontend/"
-                    }
-                }
-                stage('Build Auth Service') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-auth-service:${IMAGE_TAG} ./auth-service/"
-                    }
-                }
-                stage('Build Chat Service') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-chat-service:${IMAGE_TAG} ./chat-service/"
-                    }
-                }
-                stage('Build User Service') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-user-service:${IMAGE_TAG} ./user-service/"
-                    }
-                }
-                stage('Build Notification Service') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-notification-service:${IMAGE_TAG} ./notification-service/"
-                    }
-                }
-                stage('Build Call Service') {
-                    steps {
-                        sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
-                    }
+            steps {
+                script {
+                    echo "Building Frontend..."
+                    sh "docker build -t ${PROJECT}-frontend:${IMAGE_TAG} ./frontend/"
+
+                    echo "Building Auth Service..."
+                    sh "docker build -t ${PROJECT}-auth-service:${IMAGE_TAG} ./auth-service/"
+
+                    echo "Building Chat Service..."
+                    sh "docker build -t ${PROJECT}-chat-service:${IMAGE_TAG} ./chat-service/"
+
+                    echo "Building User Service..."
+                    sh "docker build -t ${PROJECT}-user-service:${IMAGE_TAG} ./user-service/"
+
+                    echo "Building Notification Service..."
+                    sh "docker build -t ${PROJECT}-notification-service:${IMAGE_TAG} ./notification-service/"
+
+                    echo "Building Call Service..."
+                    sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
                 }
             }
         }
