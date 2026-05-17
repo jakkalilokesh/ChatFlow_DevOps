@@ -56,7 +56,7 @@ for entry in "${SERVICES[@]}"; do
   fi
 
   RESPONSE=$(kubectl exec "${POD}" -n "${NAMESPACE}" -- \
-    wget -qO- "http://localhost:${PORT}/health" 2>/dev/null || echo "FAIL")
+    wget -qO- "http://127.0.0.1:${PORT}/health" 2>/dev/null || echo "FAIL")
 
   if echo "${RESPONSE}" | grep -q '"status"'; then
     log "  ✓ ${SVC} is healthy"
