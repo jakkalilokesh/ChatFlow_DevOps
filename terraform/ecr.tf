@@ -4,7 +4,8 @@ locals {
     "auth-service",
     "chat-service",
     "user-service",
-    "notification-service"
+    "notification-service",
+    "call-service"
   ])
 }
 

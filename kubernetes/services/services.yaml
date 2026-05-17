@@ -133,3 +133,20 @@ spec:
       port: 5432
       targetPort: 5432
       protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: call-service
+  namespace: production
+  labels:
+    app: call-service
+spec:
+  type: ClusterIP
+  selector:
+    app: call-service
+  ports:
+    - name: http
+      port: 3005
+      targetPort: 3005
+      protocol: TCP
