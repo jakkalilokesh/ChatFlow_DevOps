@@ -101,6 +101,14 @@ pipeline {
 
                     def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
+                        // Ensure ECR repo exists (idempotent — safe to call if already exists)
+                        sh """
+                            aws ecr describe-repositories --repository-names ${PROJECT}-${svc} --region ${AWS_REGION} 2>/dev/null || \
+                            aws ecr create-repository --repository-name ${PROJECT}-${svc} --region ${AWS_REGION} \
+                                --image-scanning-configuration scanOnPush=true \
+                                --encryption-configuration encryptionType=AES256
+                        """
+
                         def localTag  = "${PROJECT}-${svc}:${IMAGE_TAG}"
                         def remoteTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:${IMAGE_TAG}"
                         def latestTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:latest"

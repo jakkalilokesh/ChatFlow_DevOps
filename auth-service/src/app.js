@@ -379,7 +379,7 @@ app.post('/auth/reset-password', asyncHandler(async (req, res) => {
 app.get('/auth/verify-email/:token', asyncHandler(async (req, res) => {
   const hash   = hashToken(req.params.token);
   const result = await pool.query(
-    `SELECT evt.id, evt.user_id, evt.expires_at, evt.used, u.username
+    `SELECT evt.id, evt.user_id, evt.expires_at, evt.used, u.username, u.email
      FROM email_verification_tokens evt
      JOIN users u ON evt.user_id = u.id
      WHERE evt.token_hash = $1`,
@@ -389,7 +389,7 @@ app.get('/auth/verify-email/:token', asyncHandler(async (req, res) => {
   const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:3000';
 
   if (!result.rows[0])                               return res.redirect(`${FRONTEND}/login?error=invalid_token`);
-  const { id, user_id, expires_at, used, username } = result.rows[0];
+  const { id, user_id, expires_at, used, username, email } = result.rows[0];
   if (used)                                           return res.redirect(`${FRONTEND}/login?verified=already`);
   if (new Date() > new Date(expires_at))              return res.redirect(`${FRONTEND}/login?error=token_expired`);
 
@@ -397,7 +397,7 @@ app.get('/auth/verify-email/:token', asyncHandler(async (req, res) => {
   await pool.query('UPDATE email_verification_tokens SET used = true WHERE id = $1', [id]);
 
   if (process.env.SMTP_USER) {
-    sendEmail(result.rows[0].email, 'welcomeBack', [username]).catch(() => {});
+    sendEmail(email, 'welcomeBack', [username]).catch(() => {});
   }
 
   logger.info('Email verified', { userId: user_id });

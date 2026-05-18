@@ -52,6 +52,9 @@ log "Applying namespace and config..."
 kubectl apply -f kubernetes/namespaces/namespaces.yaml --validate=false || true
 kubectl apply -f kubernetes/configmaps/app-config.yaml -n "${NAMESPACE}"
 kubectl apply -f kubernetes/storage/pvcs.yaml -n "${NAMESPACE}" || true
+# Deploy MongoDB (required by chat-service)
+kubectl apply -f kubernetes/deployments/mongo.yaml -n "${NAMESPACE}" || true
+kubectl apply -f kubernetes/services/mongo-service.yaml -n "${NAMESPACE}" || true
 
 # Update each service image
 for svc in "${SERVICES[@]}"; do
