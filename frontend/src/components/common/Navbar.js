@@ -92,7 +92,7 @@ export default function Navbar() {
         <div className="navbar__inner">
           {/* Logo */}
           <Link to="/" className="navbar__logo" aria-label="ChatFlow Home">
-            <Logo size={34} iconOnly={true} />
+            <Logo size={34} showText={false} />
             <span className="navbar__logo-text">ChatFlow</span>
           </Link>
 
