@@ -2,6 +2,8 @@
    ChatFlow — Global Design System
    ============================================================ */
 
+@import './components/ui/components.css';
+
 /* CSS Variables / Design Tokens */
 :root {
   /* Colors */

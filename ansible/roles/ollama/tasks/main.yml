@@ -1,0 +1,32 @@
+---
+- name: Install Ollama binary
+  shell: curl -fsSL https://ollama.ai/install.sh | sh
+  args:
+    creates: /usr/local/bin/ollama
+
+- name: Ensure Ollama systemd service is enabled and started
+  systemd:
+    name: ollama
+    enabled: yes
+    state: started
+
+- name: Wait for Ollama API to be ready
+  uri:
+    url: http://localhost:11434/api/tags
+    method: GET
+    status_code: 200
+  register: ollama_ready
+  until: ollama_ready.status == 200
+  retries: 15
+  delay: 5
+
+- name: Pull default model ({{ ollama_model | default('phi3') }})
+  shell: ollama pull {{ ollama_model | default('phi3') }}
+  async: 600
+  poll: 30
+  register: ollama_pull
+
+- name: Print pulled model info
+  debug:
+    msg: "Model {{ ollama_model | default('phi3') }} pulled successfully."
+  when: ollama_pull.rc == 0

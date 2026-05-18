@@ -51,6 +51,32 @@ data:
         static_configs:
           - targets: ['node-exporter:9100']
 
+      - job_name: 'auth-service'
+        static_configs:
+          - targets: ['auth-service.chatflow.svc.cluster.local:3001']
+        metrics_path: /metrics
+
+      - job_name: 'chat-service'
+        static_configs:
+          - targets: ['chat-service.chatflow.svc.cluster.local:3002']
+        metrics_path: /metrics
+
+      - job_name: 'user-service'
+        static_configs:
+          - targets: ['user-service.chatflow.svc.cluster.local:3003']
+        metrics_path: /metrics
+
+      - job_name: 'ai-service'
+        static_configs:
+          - targets: ['ai-service.chatflow.svc.cluster.local:3006']
+        metrics_path: /metrics
+
+      - job_name: 'ollama'
+        static_configs:
+          - targets: ['ollama.chatflow.svc.cluster.local:11434']
+        metrics_path: /metrics
+
+
   alerts.yml: |
     groups:
       - name: chatflow-alerts

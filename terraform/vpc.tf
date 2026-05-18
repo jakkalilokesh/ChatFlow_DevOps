@@ -10,8 +10,23 @@ resource "aws_subnet" "public" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
-  tags = { Name = "${var.project_name}-public-subnet" }
+  tags = { Name = "${var.project_name}-public-subnet-1" }
 }
+
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+  tags = { Name = "${var.project_name}-public-subnet-2" }
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = "${var.project_name}-db-subnet-group"
+  subnet_ids = [aws_subnet.public.id, aws_subnet.public_2.id]
+  tags       = { Name = "${var.project_name}-db-subnet-group" }
+}
+
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id

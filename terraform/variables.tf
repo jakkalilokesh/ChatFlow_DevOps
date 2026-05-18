@@ -32,3 +32,16 @@ variable "ssh_public_key_path" {
   type        = string
   default     = "~/.ssh/chat-app-key.pub"
 }
+
+variable "db_password" {
+  description = "Password for PostgreSQL RDS"
+  type        = string
+  sensitive   = true
+}
+
+variable "mongo_password" {
+  description = "Password for MongoDB/DocumentDB"
+  type        = string
+  sensitive   = true
+}
+

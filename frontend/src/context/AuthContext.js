@@ -4,14 +4,14 @@ import api from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error,   setError]   = useState(null);
 
-  // Restore session from localStorage on mount
+  // ── Restore session on mount ─────────────────────────
   useEffect(() => {
-    const token = localStorage.getItem('chatflow_token');
-    const storedUser = localStorage.getItem('chatflow_user');
+    const token       = localStorage.getItem('chatflow_token');
+    const storedUser  = localStorage.getItem('chatflow_user');
     if (token && storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
@@ -25,10 +25,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (email, password, rememberMe = false) => {
-    setError(null);
-    const response = await api.post('/auth/login', { email, password });
-    const { user: userData, token, refreshToken } = response.data;
+  const _storeSession = (userData, token, refreshToken, rememberMe = true) => {
     setUser(userData);
     localStorage.setItem('chatflow_token', token);
     localStorage.setItem('chatflow_user', JSON.stringify(userData));
@@ -38,32 +35,39 @@ export function AuthProvider({ children }) {
       sessionStorage.setItem('chatflow_refresh', refreshToken);
     }
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  };
+
+  const login = useCallback(async (email, password, rememberMe = false) => {
+    setError(null);
+    const response  = await api.post('/auth/login', { email, password });
+    const { user: userData, token, refreshToken } = response.data;
+    _storeSession(userData, token, refreshToken, rememberMe);
+    return userData;
+  }, []);
+
+  // Called after OAuth callback — receives tokens from URL params
+  const loginWithTokens = useCallback((data) => {
+    const userData = {
+      id: data.userId, username: data.username,
+      email: data.email, avatarUrl: data.avatarUrl,
+    };
+    _storeSession(userData, data.accessToken, data.refreshToken, true);
     return userData;
   }, []);
 
   const register = useCallback(async (payload) => {
     setError(null);
-    const response = await api.post('/auth/register', payload);
+    const response  = await api.post('/auth/register', payload);
     const { user: userData, token, refreshToken } = response.data;
-    setUser(userData);
-    localStorage.setItem('chatflow_token', token);
-    localStorage.setItem('chatflow_user', JSON.stringify(userData));
-    localStorage.setItem('chatflow_refresh', refreshToken);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    _storeSession(userData, token, refreshToken, true);
     return userData;
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      const refreshToken =
-        localStorage.getItem('chatflow_refresh') ||
-        sessionStorage.getItem('chatflow_refresh');
-      if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken });
-      }
-    } catch {
-      // Silent — still clear local state
-    } finally {
+      const rt = localStorage.getItem('chatflow_refresh') || sessionStorage.getItem('chatflow_refresh');
+      if (rt) await api.post('/auth/logout', { refreshToken: rt });
+    } catch { /* silent */ } finally {
       setUser(null);
       localStorage.removeItem('chatflow_token');
       localStorage.removeItem('chatflow_user');
@@ -82,7 +86,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, register, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, error, login, loginWithTokens, logout, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

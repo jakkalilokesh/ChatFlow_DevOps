@@ -66,6 +66,14 @@ spec:
                 name: call-service
                 port:
                   number: 3005
+          # AI service (streaming + integrations)
+          - path: /ai
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 3006
           # Frontend SPA (catch-all last)
           - path: /
             pathType: Prefix

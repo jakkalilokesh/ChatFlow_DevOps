@@ -283,37 +283,35 @@ app.post('/api/users/:id/avatar', authMiddleware, upload.single('avatar'), async
   res.json({ avatarUrl });
 }));
 
-// POST /api/upload/presign  — generate a presigned URL for direct browser→MinIO upload
+// POST /api/upload/presign  — generate a presigned URL for direct browser→S3 upload
 app.post('/api/upload/presign', authMiddleware, asyncHandler(async (req, res) => {
   const { bucket = 'attachments', fileName, fileType } = req.body;
   if (!fileName || !fileType) return res.status(400).json({ message: 'fileName and fileType are required' });
 
-  // Validate bucket name
-  const ALLOWED_BUCKETS = ['avatars', 'attachments', 'voice-notes', 'thumbnails'];
-  if (!ALLOWED_BUCKETS.includes(bucket)) return res.status(400).json({ message: 'Invalid bucket' });
+  // Use a single media bucket with prefix paths, or multiple buckets depending on setup.
+  // Here we use the S3_BUCKET as the main bucket, and use the 'bucket' param as a folder prefix.
+  const ALLOWED_FOLDERS = ['avatars', 'attachments', 'voice-notes', 'thumbnails'];
+  if (!ALLOWED_FOLDERS.includes(bucket)) return res.status(400).json({ message: 'Invalid folder' });
 
   try {
-    const Minio = require('minio');
-    const minioClient = new Minio.Client({
-      endPoint:  process.env.MINIO_ENDPOINT || 'minio',
-      port:      parseInt(process.env.MINIO_PORT || '9000', 10),
-      useSSL:    process.env.MINIO_USE_SSL === 'true',
-      accessKey: process.env.MINIO_ROOT_USER || 'chatflow_admin',
-      secretKey: process.env.MINIO_ROOT_PASSWORD || 'chatflow_password',
+    const ext = fileName.split('.').pop().toLowerCase();
+    const objectName = `${bucket}/${req.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: objectName,
+      ContentType: fileType,
+      ACL: 'public-read',
     });
 
-    const ext = fileName.split('.').pop().toLowerCase();
-    const objectName = `${req.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-
     // Generate presigned URL (PUT) valid for 15 minutes
-    const uploadUrl = await minioClient.presignedPutObject(bucket, objectName, 15 * 60);
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 15 * 60 });
 
-    const minioPublicEndpoint = process.env.MINIO_PUBLIC_URL || `http://localhost:9000`;
-    const fileUrl = `${minioPublicEndpoint}/${bucket}/${objectName}`;
+    const fileUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${objectName}`;
 
-    res.json({ uploadUrl, fileUrl, bucket, objectName });
+    res.json({ uploadUrl, fileUrl, bucket: S3_BUCKET, objectName });
   } catch (err) {
-    logger.error('MinIO presign error', { err: err.message });
+    logger.error('S3 presign error', { err: err.message });
     res.status(500).json({ message: 'Failed to generate upload URL' });
   }
 }));

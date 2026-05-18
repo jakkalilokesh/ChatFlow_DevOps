@@ -38,6 +38,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tf_state" {
   rule {
     id     = "delete-noncurrent-versions"
     status = "Enabled"
+    filter {}
     noncurrent_version_expiration {
       noncurrent_days = 30
     }
@@ -64,8 +65,34 @@ resource "aws_s3_bucket_lifecycle_configuration" "app_backups" {
   rule {
     id     = "expire-old-backups"
     status = "Enabled"
+    filter {}
     expiration {
       days = 7
     }
   }
 }
+
+# ── Media Assets Bucket (Replaces MinIO) ────────────────
+resource "aws_s3_bucket" "media_assets" {
+  bucket        = "${var.project_name}-media-${random_id.suffix.hex}"
+  force_destroy = true
+  tags          = { Name = "${var.project_name}-media", Purpose = "AppMedia" }
+}
+
+resource "aws_s3_bucket_cors_configuration" "media_cors" {
+  bucket = aws_s3_bucket.media_assets.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
+    allowed_origins = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
+}
+
+output "s3_media_bucket" {
+  description = "S3 Bucket for Media Assets"
+  value       = aws_s3_bucket.media_assets.bucket
+}
+

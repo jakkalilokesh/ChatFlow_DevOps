@@ -103,40 +103,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo
-  namespace: production
-  labels:
-    app: mongo
-spec:
-  type: ClusterIP
-  selector:
-    app: mongo
-  ports:
-    - name: mongo
-      port: 27017
-      targetPort: 27017
-      protocol: TCP
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  namespace: production
-  labels:
-    app: postgres
-spec:
-  type: ClusterIP
-  selector:
-    app: postgres
-  ports:
-    - name: postgres
-      port: 5432
-      targetPort: 5432
-      protocol: TCP
----
-apiVersion: v1
-kind: Service
-metadata:
   name: call-service
   namespace: production
   labels:
@@ -150,3 +116,4 @@ spec:
       port: 3005
       targetPort: 3005
       protocol: TCP
+

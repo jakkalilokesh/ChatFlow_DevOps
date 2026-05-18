@@ -64,7 +64,7 @@ resource "aws_security_group" "k3s_sg" {
     from_port               = 6443
     to_port                 = 6443
     protocol                = "tcp"
-    source_security_group_id = aws_security_group.jenkins_sg.id
+    security_groups         = [aws_security_group.jenkins_sg.id]
   }
 
   ingress {

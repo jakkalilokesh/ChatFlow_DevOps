@@ -1,0 +1,24 @@
+---
+# Master Playbook
+# Provisions Jenkins and k3s nodes using roles.
+
+- name: Setup Common Configuration
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Setup Jenkins Server
+  hosts: jenkins
+  become: true
+  roles:
+    - docker
+    - jenkins
+
+- name: Setup k3s Node
+  hosts: k3s
+  become: true
+  roles:
+    - docker # Optional, but good if k3s needs docker instead of containerd, or if you use docker commands
+    - k3s
+    - ollama

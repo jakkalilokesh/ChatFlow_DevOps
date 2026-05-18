@@ -14,6 +14,8 @@ volumes:
   minio_data:
   meilisearch_data:
   libretranslate_data:
+  ollama_data:
+  whisper_cache:
 
 services:
 
@@ -350,7 +352,6 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Correct path for language model persistence in recent images
       - libretranslate_data:/home/libretranslate/.local
     networks:
       - chat-network
@@ -360,3 +361,69 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+  # ── Ollama (Local LLM — phi3.5:mini default) ─────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chatflow-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── Whisper ASR (Voice-to-text) ───────────────────────────
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: chatflow-whisper
+    restart: unless-stopped
+    ports:
+      - "9009:9000"
+    environment:
+      - ASR_MODEL=base.en
+      - ASR_ENGINE=openai_whisper
+    volumes:
+      - whisper_cache:/root/.cache/whisper
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ── AI Service (Ollama + HuggingFace) ────────────────────
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: chatflow-ai
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AI_SERVICE_PORT: 3006
+      NODE_ENV: production
+      OLLAMA_URL: http://ollama:11434
+      WHISPER_URL: http://whisper:9000
+    networks:
+      - chat-network
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3006/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

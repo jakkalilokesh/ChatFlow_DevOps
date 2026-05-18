@@ -10,15 +10,13 @@ terraform {
       version = "~> 3.6"
     }
   }
-  backend "s3" {
-    # These values are populated after the first apply that creates the bucket.
-    # Use: terraform init -backend-config="bucket=<bucket-name>"
-    bucket         = "chat-app-tfstate-placeholder"
-    key            = "prod/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-lock"
-    encrypt        = true
-  }
+  # backend "s3" {
+  #   bucket         = "chat-app-tfstate-placeholder"
+  #   key            = "prod/terraform.tfstate"
+  #   region         = "us-east-1"
+  #   use_lockfile   = true
+  #   encrypt        = true
+  # }
 }
 
 provider "aws" {

@@ -140,3 +140,6 @@ id_ed25519.pub
 tmp/
 temp/
 .cache/
+
+*.pem
+ansible/chatflow-k3s.yaml

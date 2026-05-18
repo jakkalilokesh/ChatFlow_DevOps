@@ -1,153 +1,74 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
 
-const WS_URL = process.env.REACT_APP_WS_URL || '';
-
 export function SocketProvider({ children }) {
-  const { user } = useAuth();
-  const socketRef = useRef(null);
-  const [connected, setConnected] = useState(false);
-  const [typingUsers, setTypingUsers] = useState({});
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
-  const listenersRef = useRef({});
+  const { user }    = useAuth();
+  const socketRef   = useRef(null);
+  const [isConnected,    setIsConnected]    = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
+  const [onlineUsers,    setOnlineUsers]    = useState([]);
+
+  const token = localStorage.getItem('chatflow_token');
 
   useEffect(() => {
-    if (!user) return;
+    if (!token || !user) return;
 
-    const token = localStorage.getItem('chatflow_token');
-    const socket = io(`${WS_URL}/chat`, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
+    const socket = io(
+      process.env.REACT_APP_SOCKET_URL || window.location.origin,
+      {
+        path:        '/socket.io/',
+        auth:        { token },
+        transports:  ['websocket', 'polling'],
+        reconnection:         true,
+        reconnectionAttempts: 5,
+        reconnectionDelay:    1000,
+        reconnectionDelayMax: 5000,
+        timeout:              20000,
+        forceNew:             true,
+      }
+    );
 
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      setConnected(true);
+      setIsConnected(true);
+      setConnectionError(null);
+      console.log('✅ Socket connected:', socket.id);
     });
 
-    socket.on('disconnect', () => {
-      setConnected(false);
+    socket.on('disconnect', (reason) => {
+      setIsConnected(false);
+      console.warn('Socket disconnected:', reason);
+      // Auto-reconnect on server-side disconnect
+      if (reason === 'io server disconnect') socket.connect();
     });
 
-    socket.on('user-typing', ({ userId, username, roomId }) => {
-      setTypingUsers((prev) => ({
-        ...prev,
-        [roomId]: { ...(prev[roomId] || {}), [userId]: username },
-      }));
+    socket.on('connect_error', (err) => {
+      setConnectionError(err.message);
+      console.error('Socket error:', err.message);
     });
 
-    socket.on('user-stopped-typing', ({ userId, roomId }) => {
-      setTypingUsers((prev) => {
-        const updated = { ...(prev[roomId] || {}) };
-        delete updated[userId];
-        return { ...prev, [roomId]: updated };
-      });
-    });
-
-    socket.on('user-joined', ({ userId }) => {
-      setOnlineUsers((prev) => new Set([...prev, userId]));
-    });
-
-    socket.on('user-left', ({ userId }) => {
-      setOnlineUsers((prev) => {
-        const next = new Set(prev);
-        next.delete(userId);
-        return next;
-      });
-    });
-
-    // Forward generic events to registered listeners
-    const genericEvents = ['new-message', 'message-updated', 'message-deleted', 'error'];
-    genericEvents.forEach((event) => {
-      socket.on(event, (data) => {
-        const listeners = listenersRef.current[event] || [];
-        listeners.forEach((cb) => cb(data));
-      });
-    });
+    socket.on('users:online', (users) => setOnlineUsers(users));
+    socket.on('user:online',  (userId) => setOnlineUsers((p) => [...new Set([...p, userId])]));
+    socket.on('user:offline', (userId) => setOnlineUsers((p) => p.filter((id) => id !== userId)));
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
-      setConnected(false);
+      setIsConnected(false);
     };
-  }, [user]);
-
-  const emit = useCallback((event, data) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(event, data);
-    }
-  }, []);
-
-  const on = useCallback((event, callback) => {
-    listenersRef.current[event] = listenersRef.current[event] || [];
-    listenersRef.current[event].push(callback);
-    return () => {
-      listenersRef.current[event] = (listenersRef.current[event] || []).filter(
-        (cb) => cb !== callback
-      );
-    };
-  }, []);
-
-  const joinRoom = useCallback(
-    (roomId) => emit('join-room', { roomId }),
-    [emit]
-  );
-
-  const leaveRoom = useCallback(
-    (roomId) => emit('leave-room', { roomId }),
-    [emit]
-  );
-
-  const sendMessage = useCallback(
-    (roomId, content, type = 'text', replyTo = null) =>
-      emit('send-message', { roomId, content, type, replyTo }),
-    [emit]
-  );
-
-  const startTyping = useCallback(
-    (roomId) => emit('typing-start', { roomId }),
-    [emit]
-  );
-
-  const stopTyping = useCallback(
-    (roomId) => emit('typing-stop', { roomId }),
-    [emit]
-  );
-
-  const markRead = useCallback(
-    (roomId) => emit('mark-read', { roomId }),
-    [emit]
-  );
+  }, [token, user?.id]); // eslint-disable-line
 
   return (
-    <SocketContext.Provider
-      value={{
-        connected,
-        typingUsers,
-        onlineUsers,
-        emit,
-        on,
-        joinRoom,
-        leaveRoom,
-        sendMessage,
-        startTyping,
-        stopTyping,
-        markRead,
-      }}
-    >
+    <SocketContext.Provider value={{
+      socket: socketRef.current,
+      isConnected,
+      connectionError,
+      onlineUsers,
+    }}>
       {children}
     </SocketContext.Provider>
   );

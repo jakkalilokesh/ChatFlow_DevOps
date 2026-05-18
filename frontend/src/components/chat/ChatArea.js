@@ -6,32 +6,64 @@ import EmojiPicker from 'emoji-picker-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { useSocket } from '../../context/SocketContext';
 import MessageBubble from './MessageBubble';
+import VirtualMessageList from './VirtualMessageList';
+import GiphyPicker from './GiphyPicker';
+import PollCreator from './PollCreator';
+import { MessageSkeleton } from '../ui/Skeleton';
+import { EmptyMessages } from '../ui/EmptyState';
+import { executeSlashCommand, SLASH_COMMANDS } from '../../utils/slashCommands';
 import './ChatArea.css';
 
 const MAX_CHARS = 2000;
 
+// Slash command autocomplete dropdown
+function SlashDropdown({ commands, onSelect }) {
+  return (
+    <div style={{
+      position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 100,
+      background: 'rgba(13,20,40,0.98)', border: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: 12, overflow: 'hidden', marginBottom: 8,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    }}>
+      {commands.map((cmd) => (
+        <button
+          key={cmd.name}
+          onClick={() => onSelect(cmd)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            width: '100%', padding: '10px 14px',
+            background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            color: 'var(--text-primary)',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(108,99,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+        >
+          <span style={{ fontFamily: 'monospace', color: '#6c63ff', fontWeight: 600, minWidth: 80 }}>{cmd.name}</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{cmd.desc}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function ChatArea({
-  room, messages, loading, hasMore, onLoadMore, currentUser,
+  room, messages = [], loading, hasMore, onLoadMore, currentUser,
   onToggleSidebar, onToggleInfo, sidebarOpen,
 }) {
   const { sendMessage, startTyping, stopTyping, typingUsers, connected } = useSocket();
-  const [input, setInput] = useState('');
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [replyTo, setReplyTo] = useState(null);
-  const textareaRef = useRef(null);
+  const [input,      setInput]      = useState('');
+  const [showEmoji,  setShowEmoji]  = useState(false);
+  const [showGiphy,  setShowGiphy]  = useState(false);
+  const [showPoll,   setShowPoll]   = useState(false);
+  const [replyTo,    setReplyTo]    = useState(null);
+  const [slashCmds,  setSlashCmds]  = useState([]);
+  const textareaRef    = useRef(null);
   const typingTimerRef = useRef(null);
-  const isTypingRef = useRef(false);
-  const messagesEndRef = useRef(null);
+  const isTypingRef    = useRef(false);
 
-  const roomTyping = room ? (typingUsers[room._id] || {}) : {};
+  const roomTyping = room ? (typingUsers?.[room._id] || {}) : {};
   const typingList = Object.values(roomTyping).filter(Boolean);
-
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -41,81 +73,141 @@ export default function ChatArea({
     }
   }, [input]);
 
+  // Slash command detection
   const handleInput = (e) => {
     const val = e.target.value;
     if (val.length > MAX_CHARS) return;
     setInput(val);
 
+    // Show slash autocomplete
+    if (val.startsWith('/') && !val.includes(' ')) {
+      const partial = val.toLowerCase();
+      const matches = SLASH_COMMANDS.filter((c) => c.name.startsWith(partial));
+      setSlashCmds(matches);
+    } else {
+      setSlashCmds([]);
+    }
+
+    // Typing indicator
     if (!isTypingRef.current && room) {
       isTypingRef.current = true;
-      startTyping(room._id);
+      startTyping?.(room._id);
     }
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
       isTypingRef.current = false;
-      if (room) stopTyping(room._id);
+      if (room) stopTyping?.(room._id);
     }, 1500);
+  };
+
+  const handleSlashSelect = (cmd) => {
+    setSlashCmds([]);
+    if (cmd.name === '/gif')       { setInput(''); setShowGiphy(true); return; }
+    if (cmd.name === '/poll')      { setInput(''); setShowPoll(true); return; }
+    if (cmd.name === '/shrug')     { setInput('¯\\_(ツ)_/¯'); return; }
+    if (cmd.name === '/tableflip') { setInput('(╯°□°）╯彡┻━┻'); return; }
+    setInput(cmd.name + ' ');
+    textareaRef.current?.focus();
   };
 
   const handleSend = useCallback(() => {
     const text = input.trim();
     if (!text || !room || !connected) return;
 
-    sendMessage(room._id, text, 'text', replyTo?._id || null);
+    // Execute slash commands
+    if (text.startsWith('/')) {
+      const parts = text.split(' ');
+      const cmdName = parts[0];
+      const args = parts.slice(1).join(' ');
+      const handled = executeSlashCommand(cmdName, args, {
+        setInput,
+        openGiphy:     () => setShowGiphy(true),
+        openPoll:      () => setShowPoll(true),
+        sendMessage:   (content) => sendMessage?.(room._id, content, 'text', null),
+        currentRoom:   room,
+      });
+      if (handled) { setInput(''); setSlashCmds([]); return; }
+    }
+
+    sendMessage?.(room._id, text, 'text', replyTo?._id || null);
     setInput('');
     setReplyTo(null);
+    setSlashCmds([]);
     clearTimeout(typingTimerRef.current);
     isTypingRef.current = false;
-    stopTyping(room._id);
-
-    // Focus back to input
+    stopTyping?.(room._id);
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [input, room, connected, sendMessage, replyTo, stopTyping]);
 
   const handleKeyDown = (e) => {
+    if (slashCmds.length > 0 && (e.key === 'Escape')) {
+      setSlashCmds([]);
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  const handleEmojiSelect = (emojiData) => {
-    setInput((prev) => prev + emojiData.emoji);
-    setShowEmoji(false);
-    textareaRef.current?.focus();
+  const handleGifSelect = (gif) => {
+    if (!room || !connected) return;
+    sendMessage?.(room._id, gif.url, 'gif', null);
+    setShowGiphy(false);
   };
 
-  // Group messages by date and consecutive sender
+  const handlePollSubmit = (pollData) => {
+    if (!room || !connected) return;
+    sendMessage?.(room._id, JSON.stringify(pollData), 'poll', null);
+    setShowPoll(false);
+  };
+
+  // Group messages by date for VirtualMessageList render prop
   const groupedMessages = useMemo(() => {
     if (!messages.length) return [];
     const groups = [];
     let currentDate = null;
-
     messages.forEach((msg, i) => {
       const msgDate = new Date(msg.createdAt);
-      const prevMsg = messages[i - 1];
-
-      // Date separator
+      const prevMsg  = messages[i - 1];
       if (!currentDate || !isSameDay(new Date(prevMsg?.createdAt || 0), msgDate)) {
         currentDate = msgDate;
-        let dateLabel = '';
-        if (isToday(msgDate)) dateLabel = 'Today';
-        else if (isYesterday(msgDate)) dateLabel = 'Yesterday';
-        else dateLabel = format(msgDate, 'EEEE, MMMM d');
-        groups.push({ type: 'date', label: dateLabel, id: `date-${msgDate.toDateString()}` });
+        let label = '';
+        if (isToday(msgDate))     label = 'Today';
+        else if (isYesterday(msgDate)) label = 'Yesterday';
+        else label = format(msgDate, 'EEEE, MMMM d');
+        groups.push({ type: 'date', label, id: `date-${msgDate.toDateString()}` });
       }
-
       const isGrouped =
         prevMsg &&
         prevMsg.senderId === msg.senderId &&
         isSameDay(new Date(prevMsg.createdAt), msgDate) &&
         (msgDate - new Date(prevMsg.createdAt)) < 5 * 60 * 1000;
-
       groups.push({ type: 'message', msg, isGrouped, isOwn: msg.senderId === currentUser?.id });
     });
-
     return groups;
   }, [messages, currentUser]);
+
+  const renderMessage = useCallback((item) => {
+    if (!item) return null;
+    if (item.type === 'date') {
+      return (
+        <div key={item.id} className="chat-date-separator">
+          <span>{item.label}</span>
+        </div>
+      );
+    }
+    return (
+      <MessageBubble
+        key={item.msg._id}
+        message={item.msg}
+        isOwn={item.isOwn}
+        isGrouped={item.isGrouped}
+        onReply={setReplyTo}
+        currentUser={currentUser}
+      />
+    );
+  }, [currentUser]);
 
   if (!room) {
     return (
@@ -130,22 +222,13 @@ export default function ChatArea({
   }
 
   return (
-    <div className="chat-area">
-      {/* Header */}
-      <div className="chat-header">
-        <button
-          id="toggle-sidebar-btn"
-          className="chat-header__icon-btn"
-          onClick={onToggleSidebar}
-          title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-        >
-          ☰
-        </button>
+    <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
+      {/* ── Header ────────────────────────────────────────── */}
+      <div className="chat-header">
+        <button id="toggle-sidebar-btn" className="chat-header__icon-btn touch-target" onClick={onToggleSidebar} title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}>☰</button>
         <div className="chat-header__info">
-          <div className="chat-header__room-icon">
-            {room.name[0].toUpperCase()}
-          </div>
+          <div className="chat-header__room-icon">{room.name[0].toUpperCase()}</div>
           <div>
             <h2 className="chat-header__room-name"># {room.name}</h2>
             <p className="chat-header__room-meta">
@@ -153,76 +236,39 @@ export default function ChatArea({
               {typingList.length > 0 && (
                 <span className="chat-header__typing">
                   {' · '}
-                  <span className="typing-dot" style={{ width: 5, height: 5, background: '#4ecdc4', borderRadius: '50%', display: 'inline-block' }} />
-                  <span className="typing-dot" style={{ width: 5, height: 5, background: '#4ecdc4', borderRadius: '50%', display: 'inline-block', animationDelay: '0.15s' }} />
-                  <span className="typing-dot" style={{ width: 5, height: 5, background: '#4ecdc4', borderRadius: '50%', display: 'inline-block', animationDelay: '0.3s' }} />
-                  {' '}
-                  {typingList.length === 1 ? `${typingList[0]} is typing` : 'Several people are typing'}
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  {' '}{typingList.length === 1 ? `${typingList[0]} is typing` : 'Several people are typing'}
                 </span>
               )}
             </p>
           </div>
         </div>
-
-        <button
-          id="toggle-info-btn"
-          className="chat-header__icon-btn"
-          onClick={onToggleInfo}
-          title="Room info"
-        >
-          ℹ️
-        </button>
+        <button id="toggle-info-btn" className="chat-header__icon-btn touch-target" onClick={onToggleInfo} title="Room info">ℹ️</button>
       </div>
 
-      {/* Messages */}
-      <div className="chat-messages" id="chat-messages-container">
-        {hasMore && (
-          <button className="chat-load-more" onClick={onLoadMore}>
-            Load earlier messages
-          </button>
-        )}
+      {/* ── Message list (virtual) ─────────────────────────── */}
+      <VirtualMessageList
+        messages={groupedMessages}
+        loading={loading}
+        hasMore={hasMore}
+        onLoadMore={onLoadMore}
+        renderMessage={renderMessage}
+        currentUserId={currentUser?.id}
+      />
 
-        {loading ? (
-          <div className="chat-messages__loading">
-            {[1,2,3,4,5].map((i) => (
-              <div key={i} className="skeleton" style={{ height: 56, margin: '8px 24px', borderRadius: 12 }} />
-            ))}
-          </div>
-        ) : groupedMessages.length === 0 ? (
-          <div className="chat-messages__empty">
-            <span style={{ fontSize: 48 }}>👋</span>
-            <p>No messages yet. Say hello!</p>
-          </div>
-        ) : (
-          groupedMessages.map((item) =>
-            item.type === 'date' ? (
-              <div key={item.id} className="chat-date-separator">
-                <span>{item.label}</span>
-              </div>
-            ) : (
-              <MessageBubble
-                key={item.msg._id}
-                message={item.msg}
-                isOwn={item.isOwn}
-                isGrouped={item.isGrouped}
-                onReply={setReplyTo}
-                currentUser={currentUser}
-              />
-            )
-          )
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      {/* ── Connection warning ────────────────────────────── */}
+      {!connected && (
+        <div style={{ textAlign: 'center', padding: '6px 16px', background: 'rgba(239,68,68,0.15)', color: '#fca5a5', fontSize: 13 }}>
+          ⚠️ Reconnecting to server…
+        </div>
+      )}
 
-      {/* Reply preview */}
+      {/* ── Reply preview ─────────────────────────────────── */}
       <AnimatePresence>
         {replyTo && (
-          <motion.div
-            className="chat-reply-preview"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-          >
+          <motion.div className="chat-reply-preview" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
             <div className="chat-reply-preview__inner">
               <span className="chat-reply-preview__label">↩ Replying to</span>
               <span className="chat-reply-preview__text">{replyTo.content}</span>
@@ -232,46 +278,63 @@ export default function ChatArea({
         )}
       </AnimatePresence>
 
-      {/* Input area */}
-      <div className="chat-input-area">
+      {/* ── Input area ────────────────────────────────────── */}
+      <div className="chat-input-area" style={{ flexShrink: 0, position: 'relative' }}>
+        {/* Slash autocomplete */}
+        <AnimatePresence>
+          {slashCmds.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 100, padding: '0 12px 4px' }}>
+              <SlashDropdown commands={slashCmds} onSelect={handleSlashSelect} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* GIF picker */}
+        <AnimatePresence>
+          {showGiphy && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: '100%', left: 12, zIndex: 200 }}>
+              <GiphyPicker onSelect={handleGifSelect} onClose={() => setShowGiphy(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Poll creator */}
+        <AnimatePresence>
+          {showPoll && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: '100%', left: 12, zIndex: 200 }}>
+              <PollCreator onSubmit={handlePollSubmit} onClose={() => setShowPoll(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="chat-input-wrapper">
-          {/* Emoji picker */}
-          <div className="emoji-picker-container">
-            <button
-              id="emoji-btn"
-              className="chat-input-icon-btn"
-              onClick={() => setShowEmoji(!showEmoji)}
-              title="Emoji"
-            >
-              😊
-            </button>
-            <AnimatePresence>
-              {showEmoji && (
-                <motion.div
-                  className="emoji-picker-popup"
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiSelect}
-                    theme="dark"
-                    skinTonesDisabled
-                    searchPlaceHolder="Search emoji..."
-                    height={380}
-                    width={320}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* Toolbar buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: 8 }}>
+            {/* Emoji */}
+            <div className="emoji-picker-container" style={{ position: 'relative' }}>
+              <button id="emoji-btn" className="chat-input-icon-btn touch-target" onClick={() => setShowEmoji(!showEmoji)} title="Emoji">😊</button>
+              <AnimatePresence>
+                {showEmoji && (
+                  <motion.div className="emoji-picker-popup" initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} transition={{ duration: 0.15 }}>
+                    <EmojiPicker
+                      onEmojiClick={(data) => { setInput((p) => p + data.emoji); setShowEmoji(false); textareaRef.current?.focus(); }}
+                      theme="dark" skinTonesDisabled searchPlaceHolder="Search emoji..." height={380} width={320}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {/* GIF */}
+            <button id="gif-btn" className="chat-input-icon-btn touch-target" onClick={() => { setShowGiphy(!showGiphy); setShowPoll(false); }} title="GIF" style={{ fontWeight: 700, fontSize: 11 }}>GIF</button>
+            {/* Poll */}
+            <button id="poll-btn" className="chat-input-icon-btn touch-target" onClick={() => { setShowPoll(!showPoll); setShowGiphy(false); }} title="Create poll">📊</button>
           </div>
 
           <textarea
             id="chat-input"
             ref={textareaRef}
             className="chat-textarea"
-            placeholder={connected ? `Message #${room.name}` : 'Connecting...'}
+            placeholder={connected ? `Message #${room.name} — type / for commands` : 'Connecting…'}
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
@@ -289,7 +352,7 @@ export default function ChatArea({
               onClick={handleSend}
               disabled={!input.trim() || !connected}
               whileHover={input.trim() ? { scale: 1.08 } : {}}
-              whileTap={input.trim() ? { scale: 0.92 } : {}}
+              whileTap={input.trim()  ? { scale: 0.92 } : {}}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -297,7 +360,7 @@ export default function ChatArea({
             </motion.button>
           </div>
         </div>
-        <p className="chat-hint">Enter to send · Shift+Enter for new line</p>
+        <p className="chat-hint">Enter to send · Shift+Enter for new line · <kbd>/</kbd> for commands</p>
       </div>
     </div>
   );

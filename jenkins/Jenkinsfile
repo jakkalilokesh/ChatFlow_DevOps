@@ -8,7 +8,7 @@ pipeline {
         IMAGE_TAG        = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
         PROJECT          = 'chat-app'
         KUBECONFIG       = credentials('kubeconfig')
-        SERVICES         = 'frontend auth-service chat-service user-service notification-service'
+        SERVICES         = 'frontend auth-service chat-service user-service notification-service call-service ai-service'
     }
 
     options {
@@ -60,6 +60,12 @@ pipeline {
 
                     echo "Building Notification Service..."
                     sh "docker build -t ${PROJECT}-notification-service:${IMAGE_TAG} ./notification-service/"
+
+                    echo "Building Call Service..."
+                    sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
+
+                    echo "Building AI Service..."
+                    sh "docker build -t ${PROJECT}-ai-service:${IMAGE_TAG} ./ai-service/"
                 }
             }
         }
@@ -67,7 +73,7 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service']
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
                         sh """
                             docker run --rm \
@@ -93,7 +99,7 @@ pipeline {
                         docker login --username AWS --password-stdin ${ECR_REGISTRY}
                     """
 
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service']
+                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
                         def localTag  = "${PROJECT}-${svc}:${IMAGE_TAG}"
                         def remoteTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:${IMAGE_TAG}"

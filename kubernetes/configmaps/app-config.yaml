@@ -7,7 +7,8 @@ metadata:
     app: chatflow
 data:
   NODE_ENV: "production"
-  DB_HOST: "postgres"
+  DB_HOST: "chat-app-postgres.c2z4kg6uw1x8.us-east-1.rds.amazonaws.com"
+  S3_BUCKET_NAME: "chat-app-media-6593d98d"
   DB_PORT: "5432"
   DB_NAME: "chatflow"
   REDIS_HOST: "redis"
