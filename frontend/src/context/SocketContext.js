@@ -17,7 +17,7 @@ export function SocketProvider({ children }) {
     if (!token || !user) return;
 
     const socket = io(
-      process.env.REACT_APP_SOCKET_URL || window.location.origin,
+      process.env.REACT_APP_WS_URL || process.env.REACT_APP_SOCKET_URL || window.location.origin,
       {
         path:        '/socket.io/',
         auth:        { token },
