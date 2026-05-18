@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 
 const connectMongo = async (retries = 10, delay = 3000) => {
-  const uri = process.env.MONGO_URI || 'mongodb://chatflow_user:password@mongo:27017/chatflow?authSource=admin';
+  const user = process.env.MONGO_INITDB_ROOT_USERNAME || 'chatflow_user';
+  const pass = process.env.MONGO_INITDB_ROOT_PASSWORD || 'password';
+  const db = process.env.MONGO_INITDB_DATABASE || 'chatflow';
+  const uri = process.env.MONGO_URI || `mongodb://${user}:${pass}@mongo:27017/${db}?authSource=admin`;
   for (let i = 0; i < retries; i++) {
     try {
       await mongoose.connect(uri, {

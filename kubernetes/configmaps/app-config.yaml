@@ -6,17 +6,48 @@ metadata:
   labels:
     app: chatflow
 data:
-  NODE_ENV: "production"
-  DB_HOST: "chat-app-postgres.c2z4kg6uw1x8.us-east-1.rds.amazonaws.com"
-  S3_BUCKET_NAME: "chat-app-media-6593d98d"
-  DB_PORT: "5432"
-  DB_NAME: "chatflow"
-  REDIS_HOST: "redis"
-  REDIS_PORT: "6379"
+  NODE_ENV:              "production"
+  # PostgreSQL (AWS RDS)
+  DB_HOST:              "chat-app-postgres.c2z4kg6uw1x8.us-east-1.rds.amazonaws.com"
+  DB_PORT:              "5432"
+  DB_NAME:              "chatflow"
+  DB_SSL:               "true"
+  # Redis (in-cluster)
+  REDIS_HOST:           "redis"
+  REDIS_PORT:           "6379"
+  # MongoDB (in-cluster)
   MONGO_INITDB_DATABASE: "chatflow"
-  JWT_EXPIRY: "15m"
-  JWT_REFRESH_EXPIRY: "7d"
-  BCRYPT_ROUNDS: "12"
-  AWS_REGION: "us-east-1"
-  CORS_ORIGIN: "*"
+  # JWT
+  JWT_EXPIRY:           "15m"
+  JWT_REFRESH_EXPIRY:   "7d"
+  BCRYPT_ROUNDS:        "12"
+  # AWS
+  AWS_REGION:           "us-east-1"
+  S3_BUCKET_NAME:       "chat-app-media-6593d98d"
+  S3_AVATARS_BUCKET:    "chat-app-media-6593d98d"
+  ECR_REGISTRY:         "584860296807.dkr.ecr.us-east-1.amazonaws.com"
+  # CORS — Vercel frontend URL
+  CORS_ORIGIN:          "https://chat-flow-dev-ops.vercel.app"
+  # Service ports
+  AUTH_SERVICE_PORT:          "3001"
+  CHAT_SERVICE_PORT:          "3002"
+  USER_SERVICE_PORT:          "3003"
+  NOTIFICATION_SERVICE_PORT:  "3004"
+  CALL_SERVICE_PORT:          "3005"
+  AI_SERVICE_PORT:            "3006"
+  # AI / ML
+  OLLAMA_URL:           "http://ollama:11434"
+  OLLAMA_MODEL:         "phi3"
+  WHISPER_URL:          "http://whisper:9000"
+  WHISPER_MODEL:        "base.en"
+  LIBRETRANSLATE_URL:   "http://libretranslate:5000"
+  # Monitoring
   PROMETHEUS_RETENTION: "15d"
+  # WebRTC
+  RTC_MIN_PORT:         "40000"
+  RTC_MAX_PORT:         "49999"
+  # 2FA issuer
+  TOTP_ISSUER:          "ChatFlow"
+  # SMTP
+  SMTP_HOST:            "smtp.gmail.com"
+  SMTP_PORT:            "587"

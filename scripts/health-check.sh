@@ -15,7 +15,8 @@ SERVICES=(
   "chat-service:3002"
   "user-service:3003"
   "notification-service:3004"
-  "frontend:3000"
+  "call-service:3005"
+  "ai-service:3006"
 )
 
 log "=== ChatFlow Health Check ==="
@@ -55,10 +56,11 @@ for entry in "${SERVICES[@]}"; do
     continue
   fi
 
+  # Use node to avoid wget/curl not being present in alpine images
   RESPONSE=$(kubectl exec "${POD}" -n "${NAMESPACE}" -- \
-    wget -qO- "http://127.0.0.1:${PORT}/health" 2>/dev/null || echo "FAIL")
+    node -e "require('http').get('http://127.0.0.1:${PORT}/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{process.stdout.write(d);process.exit(0)})}).on('error',e=>{process.stderr.write(e.message);process.exit(1)})" 2>/dev/null || echo "FAIL")
 
-  if echo "${RESPONSE}" | grep -qE '"status"|^ok'; then
+  if echo "${RESPONSE}" | grep -qE '"status"|"ok"|ok'; then
     log "  ✓ ${SVC} is healthy"
   else
     err "  ✗ ${SVC} health check failed (response: ${RESPONSE})"
