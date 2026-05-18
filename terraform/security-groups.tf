@@ -75,6 +75,22 @@ resource "aws_security_group" "k3s_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Mediasoup WebRTC UDP"
+    from_port   = 40000
+    to_port     = 49999
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Mediasoup WebRTC TCP"
+    from_port   = 40000
+    to_port     = 49999
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "Allow all outbound"
     from_port   = 0

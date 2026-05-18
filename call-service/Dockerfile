@@ -13,6 +13,7 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 WORKDIR /app
 
+COPY package.json package-lock.json* ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY src/ ./src/
 
