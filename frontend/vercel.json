@@ -6,9 +6,6 @@
   "outputDirectory": "build",
   "installCommand": "npm install",
   "env": {
-    "REACT_APP_API_URL": "@chatflow_api_url",
-    "REACT_APP_SOCKET_URL": "@chatflow_socket_url",
-    "REACT_APP_GOOGLE_CLIENT_ID": "@chatflow_google_client_id",
     "GENERATE_SOURCEMAP": "false",
     "NODE_ENV": "production"
   },
