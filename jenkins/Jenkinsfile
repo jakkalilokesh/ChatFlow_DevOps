@@ -99,7 +99,7 @@ pipeline {
                         docker login --username AWS --password-stdin ${ECR_REGISTRY}
                     """
 
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
+                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
                         // Ensure ECR repo exists (idempotent — safe to call if already exists)
                         sh """
