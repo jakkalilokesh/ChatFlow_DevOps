@@ -10,12 +10,12 @@ ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT="chat-app"
 
 SERVICES=(
-  "frontend:./frontend"
   "auth-service:./auth-service"
   "chat-service:./chat-service"
   "user-service:./user-service"
   "notification-service:./notification-service"
-  "nginx:./nginx"
+  "call-service:./call-service"
+  "ai-service:./ai-service"
 )
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
