@@ -1,35 +1,28 @@
-# mediasoup requires build tools (python3, make, g++) to compile native bindings
-FROM node:20-alpine AS deps
-
-RUN apk add --no-cache python3 py3-pip make g++ linux-headers
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-# Use npm ci for reproducible builds; mediasoup must be installed with devDeps
+# Mediasoup downloads a prebuilt binary on Debian/Ubuntu, saving 5+ minutes of compile time
 RUN npm ci 2>/dev/null || npm install
 
 # ── Production stage ──────────────────────────────────────
-FROM node:20-alpine
+FROM node:20-slim
 
-# Still need runtime libs for mediasoup compiled natives
-RUN apk add --no-cache libstdc++
-
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S -D -H -u 1001 -G appgroup appuser
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY src/ ./src/
 
 RUN mkdir -p logs && chown -R appuser:appgroup /app
 
-# Mediasoup signal port; UDP range is exposed but mapped by host network or k8s
+# Mediasoup signal port
 EXPOSE 3005
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget -qO- http://localhost:3005/health || exit 1
+    CMD node -e "require('http').get('http://localhost:3005/health', (r) => {if (r.statusCode !== 200) process.exit(1)})"
 
 USER appuser
 
