@@ -116,4 +116,21 @@ spec:
       port: 3005
       targetPort: 3005
       protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: production
+  labels:
+    app: ai-service
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-service
+  ports:
+    - name: http
+      port: 3006
+      targetPort: 3006
+      protocol: TCP
 

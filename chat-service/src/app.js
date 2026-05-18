@@ -756,7 +756,11 @@ async function start() {
       else logger.info('Subscribed to chat:message channel');
     });
 
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/chatflow', {
+    const mongoUser = process.env.MONGO_INITDB_ROOT_USERNAME || 'chatflow_user';
+    const mongoPass = process.env.MONGO_INITDB_ROOT_PASSWORD || 'password';
+    const mongoDb = process.env.MONGO_INITDB_DATABASE || 'chatflow';
+    const mongoUri = process.env.MONGO_URI || `mongodb://${mongoUser}:${mongoPass}@mongo:27017/${mongoDb}?authSource=admin`;
+    await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
     });
     logger.info('MongoDB connected');
