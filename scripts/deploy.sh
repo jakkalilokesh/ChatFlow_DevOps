@@ -11,7 +11,6 @@ ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT="chat-app"
 
 SERVICES=(
-  "frontend"
   "auth-service"
   "chat-service"
   "user-service"
@@ -21,7 +20,6 @@ SERVICES=(
 )
 
 K8S_SERVICES=(
-  "frontend"
   "auth-service"
   "chat-service"
   "user-service"

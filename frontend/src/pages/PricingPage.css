@@ -20,15 +20,17 @@
 }
 
 .pricing-hero__orb--1 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(108, 99, 255, 0.2) 0%, transparent 70%);
-  top: -100px; left: -100px;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(124, 111, 247, 0.22) 0%, transparent 70%);
+  top: -120px; left: -120px;
+  animation: float 10s ease-in-out infinite;
 }
 
 .pricing-hero__orb--2 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(78, 205, 196, 0.15) 0%, transparent 70%);
+  width: 440px; height: 440px;
+  background: radial-gradient(circle, rgba(94, 223, 214, 0.16) 0%, transparent 70%);
   bottom: -80px; right: -80px;
+  animation: float 13s ease-in-out infinite reverse;
 }
 
 .pricing-hero__content { position: relative; z-index: 1; }
@@ -107,7 +109,7 @@
 
 .pricing-toggle__save {
   display: inline-block;
-  background: rgba(78, 205, 196, 0.15);
+  background: var(--accent-teal-dim);
   color: var(--accent-teal);
   font-size: 0.7rem;
   font-weight: var(--fw-bold);
@@ -130,24 +132,29 @@
 
 .plan-card {
   position: relative;
-  background: var(--bg-card);
+  background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-2xl);
   padding: 36px 28px;
   transition: all var(--transition-base);
+  box-shadow: var(--shadow-card);
 }
 
 .plan-card:hover {
   border-color: var(--plan-color, var(--accent-purple));
-  box-shadow: 0 0 0 1px var(--plan-color, var(--accent-purple)), 0 24px 60px rgba(0,0,0,0.3);
-  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px var(--plan-color, var(--accent-purple)),
+              0 24px 60px rgba(0,0,0,0.35),
+              var(--shadow-glow);
+  transform: translateY(-6px);
 }
 
 .plan-card--featured {
   border-color: var(--accent-purple);
-  background: rgba(108, 99, 255, 0.06);
-  box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.4), 0 24px 60px rgba(108, 99, 255, 0.15);
-  transform: translateY(-8px);
+  background: linear-gradient(145deg, rgba(124, 111, 247, 0.08) 0%, rgba(94, 223, 214, 0.04) 100%);
+  box-shadow: 0 0 0 1px rgba(124, 111, 247, 0.45),
+              0 24px 60px rgba(124, 111, 247, 0.18),
+              var(--shadow-glow);
+  transform: translateY(-10px);
 }
 
 .plan-card__badge {
@@ -251,15 +258,17 @@
 }
 
 .faq__item {
-  background: var(--bg-card);
+  background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-card);
 }
 
 .faq__item--open {
   border-color: var(--accent-purple);
+  box-shadow: 0 0 0 1px rgba(124, 111, 247, 0.2), var(--shadow-glow);
 }
 
 .faq__question {

@@ -8,7 +8,7 @@ pipeline {
         IMAGE_TAG        = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
         PROJECT          = 'chat-app'
         KUBECONFIG       = credentials('kubeconfig')
-        SERVICES         = 'frontend auth-service chat-service user-service notification-service call-service ai-service'
+        SERVICES         = 'auth-service chat-service user-service notification-service call-service ai-service'
     }
 
     options {
@@ -46,8 +46,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    echo "Building Frontend..."
-                    sh "docker build -t ${PROJECT}-frontend:${IMAGE_TAG} ./frontend/"
+                    // NOTE: Frontend is deployed via Vercel (Git integration).
+                    // Only backend microservices are built and pushed to ECR.
 
                     echo "Building Auth Service..."
                     sh "docker build -t ${PROJECT}-auth-service:${IMAGE_TAG} ./auth-service/"
@@ -73,7 +73,7 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    def services = ['frontend', 'auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
+                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
                         sh """
                             docker run --rm \

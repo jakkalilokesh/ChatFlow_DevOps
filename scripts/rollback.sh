@@ -6,7 +6,6 @@ set -euo pipefail
 NAMESPACE="${1:-production}"
 
 SERVICES=(
-  "frontend"
   "auth-service"
   "chat-service"
   "user-service"
