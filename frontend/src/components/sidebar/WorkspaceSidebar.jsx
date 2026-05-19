@@ -5,8 +5,11 @@
 import React from 'react';
 import Sidebar from '../chat/Sidebar';
 import { Logo } from '../common/Logo';
+import { useSocket } from '../../context/SocketContext';
 
 export default function WorkspaceSidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated, loadingRooms, currentUser, onClose }) {
+  const { connected } = useSocket();
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary, #0d1428)' }}>
       {/* Logo header */}
@@ -15,7 +18,18 @@ export default function WorkspaceSidebar({ rooms, activeRoom, onSelectRoom, onRo
         padding: '16px 16px 12px',
         borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.06))',
       }}>
-        <Logo size={28} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Logo size={28} />
+          <span style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: connected ? '#22c55e' : 'var(--text-muted, #475569)',
+            boxShadow: connected ? '0 0 8px #22c55e' : 'none',
+            transition: 'background-color 0.3s, box-shadow 0.3s',
+            marginTop: 4,
+          }} title={connected ? 'Connected to real-time chat server' : 'Disconnected from chat server'} />
+        </div>
         {onClose && (
           <button
             onClick={onClose}

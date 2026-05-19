@@ -267,10 +267,9 @@ export default function ChatPage() {
           padding: '4px 0', paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
           {[
-            { icon: '💬', label: 'Chat',    path: '/chat' },
-            { icon: '🔍', label: 'Search',  path: '/search' },
-            { icon: '🔔', label: 'Alerts',  path: '/notifications' },
-            { icon: '👤', label: 'Profile', path: '/profile' },
+            { icon: '💬', label: 'Chat',     path: '/chat' },
+            { icon: '⚙️', label: 'Settings', path: '/settings' },
+            { icon: '👤', label: 'Profile',  path: '/profile' },
           ].map(({ icon, label, path }) => (
             <button
               key={path}

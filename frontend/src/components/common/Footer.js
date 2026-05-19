@@ -48,8 +48,7 @@ export default function Footer() {
       <div className="footer__top">
         <div className="footer__brand">
           <Link to="/" className="footer__logo-link">
-            <Logo size={36} iconOnly={true} />
-            <span className="footer__logo-name">ChatFlow</span>
+            <Logo size={36} />
           </Link>
           <p className="footer__brand-desc">
             A blazing-fast, beautifully designed real-time chat platform built for modern teams and developers.

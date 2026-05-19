@@ -47,14 +47,6 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
 
   return (
     <div className="sidebar">
-      {/* Header */}
-      <div className="sidebar__header">
-        <Logo size={28} />
-        <div className="sidebar__connection">
-          <span className={`sidebar__dot ${connected ? 'sidebar__dot--online' : 'sidebar__dot--offline'}`} />
-        </div>
-      </div>
-
       {/* Search */}
       <div className="sidebar__search">
         <span className="sidebar__search-icon">🔍</span>
