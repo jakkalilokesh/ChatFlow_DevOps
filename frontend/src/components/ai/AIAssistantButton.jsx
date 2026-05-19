@@ -47,7 +47,13 @@ export default function AIAssistantButton({ currentRoom }) {
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.content) {
+            if (data.error) {
+              setMessages((prev) => {
+                const next = [...prev];
+                next[next.length - 1] = { ...next[next.length - 1], content: '⚠️ ' + data.error };
+                return next;
+              });
+            } else if (data.content) {
               setMessages((prev) => {
                 const next = [...prev];
                 next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + data.content };
