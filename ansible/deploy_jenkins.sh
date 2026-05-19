@@ -11,16 +11,22 @@ echo "======================================================================"
 
 # ── Step 1: Install Docker CE ────────────────────────────────────────────────
 echo "🐳 Step 1: Installing Docker CE..."
-sudo apt-get update -y
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release unzip
 
-# Import Docker GPG key
+# Clean old malformed repository definitions first
+sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/sources.list.d/jenkins.list
+sudo rm -f /etc/apt/keyrings/docker.asc /etc/apt/keyrings/jenkins-keyring.asc
+
+# Import GPG keys first (crucial to run before any apt update)
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo apt-key add -
 
+# Create clean sources list entries
 echo "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 
+# Update and install Docker and prerequisites
 sudo apt-get update -y
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release unzip docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 sudo systemctl start docker
 sudo systemctl enable docker
@@ -30,15 +36,7 @@ echo "✅ Docker successfully installed!"
 
 # ── Step 2: Install Java 21 & Jenkins ────────────────────────────────────────
 echo "👑 Step 2: Installing Java 21 and Jenkins..."
-sudo apt-get install -y openjdk-21-jdk
-
-# Import Jenkins GPG key
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo apt-key add -
-
-echo "deb https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-sudo apt-get update -y
-sudo apt-get install -y jenkins
+sudo apt-get install -y openjdk-21-jdk jenkins
 
 sudo systemctl daemon-reload
 sudo systemctl start jenkins
