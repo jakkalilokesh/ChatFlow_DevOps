@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
               <div className="form-group">
                 <label htmlFor="forgot-email">Email address</label>
                 <input
-                  id="forgot-email" type="email" value={email}
+                  id="forgot-email" className="input-field" type="email" value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com" required autoFocus
                 />

@@ -76,12 +76,12 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="login-email">Email</label>
-            <input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required autoFocus />
+            <input id="login-email" className="input-field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required autoFocus />
           </div>
           <div className="form-group">
             <label htmlFor="login-password">Password</label>
             <div className="input-with-toggle">
-              <input id="login-password" type={showPwd ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              <input id="login-password" className="input-field" type={showPwd ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
               <button type="button" onClick={() => setShowPwd(!showPwd)} className="pwd-toggle">{showPwd ? '🙈' : '👁️'}</button>
             </div>
           </div>

@@ -94,20 +94,20 @@ export default function RegisterPage() {
             <>
               <div className="form-group">
                 <label htmlFor="reg-fullname">Full Name</label>
-                <input id="reg-fullname" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" required minLength={2} />
+                <input id="reg-fullname" className="input-field" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" required minLength={2} />
               </div>
               <div className="form-group">
                 <label htmlFor="reg-username">Username</label>
-                <input id="reg-username" type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="janedoe" required minLength={3} maxLength={30} />
+                <input id="reg-username" className="input-field" type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="janedoe" required minLength={3} maxLength={30} />
               </div>
               <div className="form-group">
                 <label htmlFor="reg-email">Email</label>
-                <input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" required />
+                <input id="reg-email" className="input-field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" required />
               </div>
               <div className="form-group">
                 <label htmlFor="reg-password">Password</label>
                 <div className="input-with-toggle">
-                  <input id="reg-password" type={showPwd ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} />
+                  <input id="reg-password" className="input-field" type={showPwd ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} />
                   <button type="button" onClick={() => setShowPwd(!showPwd)} className="pwd-toggle">{showPwd ? '🙈' : '👁️'}</button>
                 </div>
                 {password && (

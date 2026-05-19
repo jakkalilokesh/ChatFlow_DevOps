@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
                 <label htmlFor="new-password">New password</label>
                 <div className="input-with-toggle">
                   <input
-                    id="new-password" type={showPwd ? 'text' : 'password'}
+                    id="new-password" className="input-field" type={showPwd ? 'text' : 'password'}
                     value={password} onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min. 8 characters" required autoFocus
                   />
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
               <div className="form-group">
                 <label htmlFor="confirm-password">Confirm password</label>
                 <input
-                  id="confirm-password" type="password"
+                  id="confirm-password" className="input-field" type="password"
                   value={confirm} onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Repeat password" required
                 />
