@@ -18,7 +18,7 @@ sudo rm -f /etc/apt/keyrings/docker.asc /etc/apt/keyrings/jenkins-keyring.asc
 
 # Import GPG keys first (crucial to run before any apt update)
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo apt-key add -
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7198F4B714ABFC68
 
 # Create clean sources list entries
 echo "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
