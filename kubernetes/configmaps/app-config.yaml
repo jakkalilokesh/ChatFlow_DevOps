@@ -11,7 +11,7 @@ data:
   DB_HOST:              "chat-app-postgres.c2z4kg6uw1x8.us-east-1.rds.amazonaws.com"
   DB_PORT:              "5432"
   DB_NAME:              "chatflow"
-  DB_SSL:               "false"
+  DB_SSL:               "true"
   # Redis (in-cluster)
   REDIS_HOST:           "redis"
   REDIS_PORT:           "6379"
@@ -23,8 +23,8 @@ data:
   BCRYPT_ROUNDS:        "12"
   # AWS
   AWS_REGION:           "us-east-1"
-  S3_BUCKET_NAME:       "chat-app-media-6593d98d"
-  S3_AVATARS_BUCKET:    "chat-app-media-6593d98d"
+  S3_BUCKET_NAME:       "chat-app-media-91d20809"
+  S3_AVATARS_BUCKET:    "chat-app-media-91d20809"
   ECR_REGISTRY:         "584860296807.dkr.ecr.us-east-1.amazonaws.com"
   # CORS — Vercel frontend URL
   CORS_ORIGIN:          "https://chat-flow-dev-ops.vercel.app"
@@ -46,7 +46,7 @@ data:
   # WebRTC
   RTC_MIN_PORT:         "40000"
   RTC_MAX_PORT:         "49999"
-  ANNOUNCED_IP:         "3.26.196.59"
+  ANNOUNCED_IP:         "44.203.161.187"
   # 2FA issuer
   TOTP_ISSUER:          "ChatFlow"
   # SMTP

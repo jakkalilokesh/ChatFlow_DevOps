@@ -35,6 +35,9 @@ const pool = new Pool({
   user: process.env.DB_USER || 'chatflow_user',
   password: process.env.DB_PASSWORD || 'password',
   max: 10,
+  ssl: process.env.NODE_ENV === 'production' && process.env.DB_SSL === 'true'
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 // ── Redis ───────────────────────────────────────────────
