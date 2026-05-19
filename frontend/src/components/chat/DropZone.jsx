@@ -20,10 +20,18 @@ function FileTypeIcon({ mime }) {
   return <span>📎</span>;
 }
 
-export default function DropZone({ children, onFileUploaded, disabled }) {
+export default function DropZone({ children, onFileUploaded, disabled, triggerRef }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState([]); // [{file, progress, url, error}]
   const inputRef = useRef(null);
+
+  React.useEffect(() => {
+    if (triggerRef) {
+      triggerRef.current = () => {
+        inputRef.current?.click();
+      };
+    }
+  }, [triggerRef]);
 
   const uploadFile = useCallback(async (file) => {
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {

@@ -12,6 +12,7 @@ import GiphyPicker from './GiphyPicker';
 import PollCreator from './PollCreator';
 import { MessageSkeleton } from '../ui/Skeleton';
 import { EmptyMessages } from '../ui/EmptyState';
+import DropZone from './DropZone';
 import { executeSlashCommand, SLASH_COMMANDS } from '../../utils/slashCommands';
 import './ChatArea.css';
 
@@ -63,6 +64,23 @@ export default function ChatArea({
   const textareaRef    = useRef(null);
   const typingTimerRef = useRef(null);
   const isTypingRef    = useRef(false);
+  const uploadTriggerRef = useRef(null);
+
+  const handleFileUploaded = useCallback((fileData) => {
+    let content = `[Attachment: ${fileData.name}](${fileData.url})`;
+    if (fileData.type.startsWith('image/')) {
+      content = `![${fileData.name}](${fileData.url})`;
+    } else if (fileData.type.startsWith('video/')) {
+      content = `Video attachment: ${fileData.url}`;
+    }
+
+    sendMessage?.({
+      content,
+      roomId: room._id,
+      replyToId: replyTo?.id || null
+    });
+    setReplyTo(null);
+  }, [sendMessage, room?._id, replyTo]);
 
   const roomTyping = room ? (typingUsers?.[room._id] || {}) : {};
   const typingList = Object.values(roomTyping).filter(Boolean);
@@ -224,7 +242,8 @@ export default function ChatArea({
   }
 
   return (
-    <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <DropZone onFileUploaded={handleFileUploaded} disabled={!connected} triggerRef={uploadTriggerRef}>
+      <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
       {/* ── Header ────────────────────────────────────────── */}
       <div className="chat-header">
@@ -349,6 +368,8 @@ export default function ChatArea({
             </div>
             {/* GIF */}
             <button id="gif-btn" className="chat-input-icon-btn touch-target" onClick={() => { setShowGiphy(!showGiphy); setShowPoll(false); }} title="GIF" style={{ fontWeight: 700, fontSize: 11 }}>GIF</button>
+            {/* Attachment upload */}
+            <button id="upload-btn" className="chat-input-icon-btn touch-target" onClick={() => uploadTriggerRef.current?.()} title="Upload files or media">📎</button>
             {/* Poll */}
             <button id="poll-btn" className="chat-input-icon-btn touch-target" onClick={() => { setShowPoll(!showPoll); setShowGiphy(false); }} title="Create poll">📊</button>
           </div>
@@ -386,5 +407,6 @@ export default function ChatArea({
         <p className="chat-hint">Enter to send · Shift+Enter for new line · <kbd>/</kbd> for commands</p>
       </div>
     </div>
+    </DropZone>
   );
 }
