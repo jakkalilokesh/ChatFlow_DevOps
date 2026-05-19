@@ -63,6 +63,21 @@ async function runMigrations() {
       updated_at                TIMESTAMPTZ DEFAULT NOW()
     );
 
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT '';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'offline';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_status TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS public_key TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret_verified BOOLEAN DEFAULT false;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT false;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes TEXT[];
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS github_id VARCHAR(255) UNIQUE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT false;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;
+
+
     CREATE TABLE IF NOT EXISTS refresh_tokens (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id     UUID REFERENCES users(id) ON DELETE CASCADE,
