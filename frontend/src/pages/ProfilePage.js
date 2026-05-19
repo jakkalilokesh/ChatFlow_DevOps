@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Navbar from '../components/common/Navbar';
@@ -10,6 +10,52 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [form, setForm] = useState({ username: user?.username || '', bio: user?.bio || '' });
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
+
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Avatar file size cannot exceed 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const loadingToast = toast.loading('Uploading avatar...');
+    try {
+      // 1. Get presigned upload URL
+      const { data } = await api.post('/api/upload/presign', {
+        bucket: 'avatars',
+        fileName: file.name,
+        fileType: file.type
+      });
+
+      // 2. Put file to MinIO
+      await fetch(data.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      });
+
+      // 3. Update the database
+      const updateRes = await api.put(`/api/users/${user.id}`, {
+        ...form,
+        avatarUrl: data.fileUrl
+      });
+      updateUser(updateRes.data.user);
+      toast.success('Avatar updated successfully!', { id: loadingToast });
+    } catch (err) {
+      toast.error(err.message || 'Avatar upload failed', { id: loadingToast });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -43,15 +89,36 @@ export default function ProfilePage() {
 
           {/* Avatar + Identity section */}
           <div className="profile-identity-section">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              style={{ display: 'none' }}
+              accept="image/*"
+              onChange={handleAvatarChange}
+            />
             <motion.div
               className="profile-avatar-wrapper"
               whileHover={{ scale: 1.05 }}
+              onClick={handleAvatarClick}
+              title="Click to change avatar"
+              style={{ position: 'relative' }}
             >
-              {user?.avatarUrl ? (
+              {uploadingAvatar ? (
+                <span className="profile-spinner" style={{ width: 32, height: 32 }} />
+              ) : user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.username} />
               ) : (
                 user?.username?.[0]?.toUpperCase()
               )}
+              <div className="profile-avatar-hover-overlay" style={{
+                position: 'absolute', inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: 0, transition: 'opacity 0.2s',
+                fontSize: 16, pointerEvents: 'none'
+              }}>
+                📷
+              </div>
             </motion.div>
             <div className="profile-identity-text">
               <h1 className="profile-identity-name">

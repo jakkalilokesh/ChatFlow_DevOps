@@ -113,6 +113,7 @@ const roomSchema = new mongoose.Schema(
     topic:         { type: String, default: '' },
     slowMode:      { type: Number, default: 0 },
     isLocked:      { type: Boolean, default: false },
+    pendingRequests: [{ type: String }],
   },
   { timestamps: true }
 );
@@ -432,8 +433,92 @@ io.on('connection', (socket) => {
 
 // GET /api/chat/rooms
 app.get('/api/chat/rooms', authMiddleware, asyncHandler(async (req, res) => {
-  const rooms = await Room.find({ type: 'public' }).sort({ lastMessageAt: -1 }).limit(50).lean();
+  const rooms = await Room.find({}).sort({ lastMessageAt: -1 }).limit(50).lean();
   res.json({ rooms });
+}));
+
+// DELETE /api/chat/rooms/:id
+app.delete('/api/chat/rooms/:id', authMiddleware, asyncHandler(async (req, res) => {
+  const room = await Room.findById(req.params.id);
+  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (room.createdBy !== req.user.id) {
+    return res.status(403).json({ message: 'Only the creator can delete this room' });
+  }
+
+  await Room.deleteOne({ _id: req.params.id });
+  await Message.deleteMany({ roomId: req.params.id });
+
+  io.to(req.params.id).emit('room:deleted', { roomId: req.params.id });
+
+  res.json({ success: true, message: 'Room deleted successfully' });
+}));
+
+// POST /api/chat/rooms/:id/join-request
+app.post('/api/chat/rooms/:id/join-request', authMiddleware, asyncHandler(async (req, res) => {
+  const room = await Room.findById(req.params.id);
+  if (!room) return res.status(404).json({ message: 'Room not found' });
+
+  if (room.members.includes(req.user.id)) {
+    return res.status(400).json({ message: 'You are already a member of this room' });
+  }
+
+  await Room.updateOne(
+    { _id: req.params.id },
+    { $addToSet: { pendingRequests: req.user.id } }
+  );
+
+  io.emit(`room:join-request:${room.createdBy}`, {
+    roomId: room._id,
+    roomName: room.name,
+    userId: req.user.id,
+    username: req.user.username
+  });
+
+  res.json({ success: true, message: 'Join request sent' });
+}));
+
+// POST /api/chat/rooms/:id/approve-request
+app.post('/api/chat/rooms/:id/approve-request', authMiddleware, asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+  const room = await Room.findById(req.params.id);
+  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (room.createdBy !== req.user.id) {
+    return res.status(403).json({ message: 'Only the creator can approve requests' });
+  }
+
+  await Room.updateOne(
+    { _id: req.params.id },
+    {
+      $pull: { pendingRequests: userId },
+      $addToSet: { members: userId },
+      $inc: { memberCount: 1 }
+    }
+  );
+
+  io.emit(`room:approved:${userId}`, { roomId: room._id, roomName: room.name });
+
+  res.json({ success: true });
+}));
+
+// POST /api/chat/rooms/:id/deny-request
+app.post('/api/chat/rooms/:id/deny-request', authMiddleware, asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+  const room = await Room.findById(req.params.id);
+  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (room.createdBy !== req.user.id) {
+    return res.status(403).json({ message: 'Only the creator can deny requests' });
+  }
+
+  await Room.updateOne(
+    { _id: req.params.id },
+    { $pull: { pendingRequests: userId } }
+  );
+
+  res.json({ success: true });
 }));
 
 // POST /api/chat/rooms

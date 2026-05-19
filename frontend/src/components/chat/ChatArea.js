@@ -14,6 +14,8 @@ import { MessageSkeleton } from '../ui/Skeleton';
 import { EmptyMessages } from '../ui/EmptyState';
 import DropZone from './DropZone';
 import { executeSlashCommand, SLASH_COMMANDS } from '../../utils/slashCommands';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import './ChatArea.css';
 
 const MAX_CHARS = 2000;
@@ -229,6 +231,26 @@ export default function ChatArea({
     );
   }, [currentUser]);
 
+  const isMember = room?.members?.includes(currentUser?.id) || room?.createdBy === currentUser?.id;
+  const [localPending, setLocalPending] = useState(false);
+
+  useEffect(() => {
+    if (room) {
+      setLocalPending(room.pendingRequests?.includes(currentUser?.id) || false);
+    }
+  }, [room?._id, room?.pendingRequests, currentUser?.id]);
+
+  const handleSendJoinRequest = async () => {
+    const loadingToast = toast.loading('Sending join request...');
+    try {
+      await api.post(`/api/chat/rooms/${room._id}/join-request`);
+      toast.success('Join request sent to the creator!', { id: loadingToast });
+      setLocalPending(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send request', { id: loadingToast });
+    }
+  };
+
   if (!room) {
     return (
       <div className="chat-area chat-area--empty">
@@ -236,6 +258,53 @@ export default function ChatArea({
           <span style={{ fontSize: 64 }}>💬</span>
           <h2>Select a room to start chatting</h2>
           <p>Choose from the sidebar or create a new room</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isMember) {
+    return (
+      <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', background: 'rgba(10, 15, 30, 0.95)' }}>
+        <div style={{
+          maxWidth: 480, width: '100%',
+          padding: 40, borderRadius: 24,
+          background: 'rgba(13, 20, 40, 0.45)', border: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(20px)', boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20
+        }}>
+          <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 3 }} style={{ fontSize: 64 }}>🔒</motion.div>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 800, color: 'white', background: 'linear-gradient(to right, #fff, #a5b4fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            # {room.name}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
+            {room.description || 'This room requires permission from the creator to join and view messages.'}
+          </p>
+          
+          {localPending ? (
+            <button disabled style={{
+              width: '100%', padding: '14px 28px',
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12, color: 'var(--text-muted)', fontSize: 14, fontWeight: 600,
+              cursor: 'not-allowed'
+            }}>
+              ⏳ Join Request Pending Approval
+            </button>
+          ) : (
+            <motion.button
+              onClick={handleSendJoinRequest}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                width: '100%', padding: '14px 28px',
+                background: 'var(--gradient-primary)', border: 'none',
+                borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 700,
+                cursor: 'pointer', boxShadow: '0 8px 24px rgba(124,111,247,0.35)'
+              }}
+            >
+              🚪 Request to Join Room
+            </motion.button>
+          )}
         </div>
       </div>
     );

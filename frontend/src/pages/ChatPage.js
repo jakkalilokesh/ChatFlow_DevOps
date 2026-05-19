@@ -9,6 +9,7 @@ import ChatArea from '../components/chat/ChatArea';
 import RoomInfoPanel from '../components/chat/RoomInfoPanel';
 import { Logo } from '../components/common/Logo';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 import './ChatPage.css';
 
 export default function ChatPage() {
@@ -28,6 +29,23 @@ export default function ChatPage() {
   const [infoPanelOpen,  setInfoPanelOpen]  = useState(false);
   const [page,           setPage]           = useState(1);
   const [hasMore,        setHasMore]        = useState(true);
+  const [bgVideo,        setBgVideo]        = useState(() => {
+    return localStorage.getItem('chat-bg-video') || 'cyber-mesh';
+  });
+
+  const BACKGROUND_VIDEOS = [
+    { id: 'cyber-mesh', name: '💻 Cyber', url: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31908-large.mp4' },
+    { id: 'neon-grid', name: '⚡ Neon', url: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-laser-lights-background-loop-41851-large.mp4' },
+    { id: 'space-dust', name: '🌌 Space', url: 'https://assets.mixkit.co/videos/preview/mixkit-glowing-particles-in-slow-motion-42289-large.mp4' },
+    { id: 'matrix-lines', name: '📈 HUD', url: 'https://assets.mixkit.co/videos/preview/mixkit-tech-hud-element-lines-loop-43094-large.mp4' },
+    { id: 'none', name: '🖤 None', url: '' }
+  ];
+
+  const handleBgVideoChange = (videoId) => {
+    setBgVideo(videoId);
+    localStorage.setItem('chat-bg-video', videoId);
+    toast.success('Background theme updated!', { icon: '🎨' });
+  };
 
   // Close sidebar on mobile when route changes
   useEffect(() => { if (isMobile) setSidebarOpen(false); }, [roomId, isMobile]);
@@ -116,6 +134,46 @@ export default function ChatPage() {
     return unsub;
   }, [on, activeRoom?._id]); // eslint-disable-line
 
+  // ── Real-time join requests & approvals ───────────────────
+  useEffect(() => {
+    if (!on || !user) return;
+
+    // Listen for room join approval notification
+    const unsubApproved = on(`room:approved:${user.id}`, ({ roomId }) => {
+      toast.success('Your request to join has been approved!');
+      setRooms((prev) =>
+        prev.map((r) =>
+          r._id === roomId
+            ? { ...r, members: [...(r.members || []), user.id] }
+            : r
+        )
+      );
+      setActiveRoom((prev) =>
+        prev && prev._id === roomId
+          ? { ...prev, members: [...(prev.members || []), user.id] }
+          : prev
+      );
+    });
+
+    // Listen for incoming join requests (for room creators)
+    const unsubRequest = on(`room:join-request:${user.id}`, ({ roomName, username }) => {
+      toast(`🚪 ${username} requested to join room #${roomName}`, {
+        duration: 6000,
+        icon: '🔑',
+        style: {
+          background: 'rgba(13,20,40,0.95)',
+          color: '#fff',
+          border: '1px solid rgba(124,111,247,0.3)',
+        }
+      });
+    });
+
+    return () => {
+      unsubApproved();
+      unsubRequest();
+    };
+  }, [on, user?.id]); // eslint-disable-line
+
   // ── Room select ──────────────────────────────────────────
   const selectRoom = useCallback((room) => {
     setActiveRoom(room);
@@ -128,19 +186,32 @@ export default function ChatPage() {
     selectRoom(newRoom);
   };
 
+  const handleRoomDeleted = (deletedRoomId) => {
+    setRooms((prev) => prev.filter((r) => r._id !== deletedRoomId));
+    setActiveRoom(null);
+    setInfoPanelOpen(false);
+    navigate('/chat');
+  };
+
   // ── Layout ───────────────────────────────────────────────
   return (
     <div className="chat-layout" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', position: 'relative' }}>
 
       {/* Ambient Video Background */}
-      <video
-        className="chat-layout__bg-video"
-        src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31908-large.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-      />
+      {(() => {
+        const currentVideo = BACKGROUND_VIDEOS.find((v) => v.id === bgVideo) || BACKGROUND_VIDEOS[0];
+        return currentVideo.url ? (
+          <video
+            key={currentVideo.url}
+            className="chat-layout__bg-video"
+            src={currentVideo.url}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : null;
+      })()}
 
       {/* ── Mobile overlay ──────────────────────────────── */}
       {isMobile && sidebarOpen && (
@@ -227,6 +298,9 @@ export default function ChatPage() {
             <RoomInfoPanel
               room={activeRoom}
               onClose={() => setInfoPanelOpen(false)}
+              onRoomDeleted={handleRoomDeleted}
+              bgVideo={bgVideo}
+              onBgVideoChange={handleBgVideoChange}
             />
           </motion.div>
         )}
