@@ -11,7 +11,9 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ username: user?.username || '', bio: user?.bio || '' });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const avatarInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
 
   const handleAvatarClick = () => {
     avatarInputRef.current?.click();
@@ -57,6 +59,50 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBannerClick = () => {
+    bannerInputRef.current?.click();
+  };
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error('Banner file size cannot exceed 8MB');
+      return;
+    }
+
+    setUploadingBanner(true);
+    const loadingToast = toast.loading('Uploading banner...');
+    try {
+      // 1. Get presigned upload URL
+      const { data } = await api.post('/api/upload/presign', {
+        bucket: 'banners',
+        fileName: file.name,
+        fileType: file.type
+      });
+
+      // 2. Put file to MinIO
+      await fetch(data.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      });
+
+      // 3. Update the database
+      const updateRes = await api.put(`/api/users/${user.id}`, {
+        ...form,
+        bannerUrl: data.fileUrl
+      });
+      updateUser(updateRes.data.user);
+      toast.success('Banner updated successfully!', { id: loadingToast });
+    } catch (err) {
+      toast.error(err.message || 'Banner upload failed', { id: loadingToast });
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -82,9 +128,37 @@ export default function ProfilePage() {
           className="profile-card-container"
         >
           {/* Banner */}
-          <div className="profile-banner">
+          <input
+            ref={bannerInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            accept="image/*"
+            onChange={handleBannerChange}
+          />
+          <div 
+            className="profile-banner" 
+            onClick={handleBannerClick}
+            style={{ 
+              backgroundImage: user?.bannerUrl ? `url(${user.bannerUrl})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            title="Click to upload a custom banner image"
+          >
             <div className="profile-banner__overlay" />
-            <div className="profile-banner__mesh" />
+            {!user?.bannerUrl && <div className="profile-banner__mesh" />}
+            
+            {uploadingBanner && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', zIndex: 5 }}>
+                <span className="profile-spinner" style={{ width: 40, height: 40 }} />
+              </div>
+            )}
+            
+            <div className="profile-banner-hover-overlay">
+              📷 Change Banner
+            </div>
           </div>
 
           {/* Avatar + Identity section */}

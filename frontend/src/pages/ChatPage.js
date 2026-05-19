@@ -21,6 +21,7 @@ export default function ChatPage() {
   const mainRef      = useRef(null);
 
   const [rooms,          setRooms]          = useState([]);
+  const [dmConversations,setDmConversations] = useState([]);
   const [activeRoom,     setActiveRoom]     = useState(null);
   const [messages,       setMessages]       = useState([]);
   const [loadingRooms,   setLoadingRooms]   = useState(true);
@@ -50,6 +51,45 @@ export default function ChatPage() {
   // Close sidebar on mobile when route changes
   useEffect(() => { if (isMobile) setSidebarOpen(false); }, [roomId, isMobile]);
 
+  // ── Fetch DM Conversations ───────────────────────────────
+  useEffect(() => {
+    const fetchDms = async () => {
+      try {
+        const { data } = await api.get('/api/dm/conversations');
+        const list = data.conversations || [];
+        const enriched = await Promise.all(
+          list.map(async (c) => {
+            const otherId = c.participants.find((p) => p !== user?.id);
+            if (!otherId) return null;
+            try {
+              const res = await api.get(`/api/users/${otherId}`);
+              return {
+                ...c,
+                _id: c._id,
+                name: res.data.user.username,
+                avatarUrl: res.data.user.avatarUrl,
+                isOnline: res.data.user.isOnline,
+                isDM: true,
+                otherUser: res.data.user
+              };
+            } catch {
+              return {
+                ...c,
+                _id: c._id,
+                name: `User (${otherId.slice(0, 6)})`,
+                isDM: true
+              };
+            }
+          })
+        );
+        setDmConversations(enriched.filter(Boolean));
+      } catch (err) {
+        console.error('Failed to fetch DMs:', err.message);
+      }
+    };
+    if (user) fetchDms();
+  }, [user]);
+
   // ── Fetch rooms ─────────────────────────────────────────
   useEffect(() => {
     const fetchRooms = async () => {
@@ -59,7 +99,26 @@ export default function ChatPage() {
         setRooms(roomList);
         if (roomId) {
           const found = roomList.find((r) => r._id === roomId);
-          if (found) setActiveRoom(found);
+          if (found) {
+            setActiveRoom(found);
+          } else {
+            // Check if active DM matches roomId route parameter
+            const dmsData = await api.get('/api/dm/conversations');
+            const matchDm = (dmsData.data.conversations || []).find((d) => d._id === roomId);
+            if (matchDm) {
+              const otherId = matchDm.participants.find((p) => p !== user?.id);
+              const userRes = await api.get(`/api/users/${otherId}`);
+              setActiveRoom({
+                ...matchDm,
+                _id: matchDm._id,
+                name: userRes.data.user.username,
+                avatarUrl: userRes.data.user.avatarUrl,
+                isOnline: userRes.data.user.isOnline,
+                isDM: true,
+                otherUser: userRes.data.user
+              });
+            }
+          }
         } else if (roomList.length > 0) {
           navigate(`/chat/${roomList[0]._id}`, { replace: true });
         }
@@ -88,9 +147,10 @@ export default function ChatPage() {
       setPage(1);
       setHasMore(true);
       try {
-        const { data } = await api.get(
-          `/api/chat/rooms/${activeRoom._id}/messages?page=1&limit=50`
-        );
+        const endpoint = activeRoom.isDM
+          ? `/api/dm/conversations/${activeRoom._id}/messages?page=1&limit=50`
+          : `/api/chat/rooms/${activeRoom._id}/messages?page=1&limit=50`;
+        const { data } = await api.get(endpoint);
         setMessages(data.messages || []);
         setHasMore(data.hasMore || false);
       } catch (err) {
@@ -107,9 +167,10 @@ export default function ChatPage() {
     if (!activeRoom || !hasMore || loadingMessages) return;
     const nextPage = page + 1;
     try {
-      const { data } = await api.get(
-        `/api/chat/rooms/${activeRoom._id}/messages?page=${nextPage}&limit=50`
-      );
+      const endpoint = activeRoom.isDM
+        ? `/api/dm/conversations/${activeRoom._id}/messages?page=${nextPage}&limit=50`
+        : `/api/chat/rooms/${activeRoom._id}/messages?page=${nextPage}&limit=50`;
+      const { data } = await api.get(endpoint);
       setMessages((prev) => [...(data.messages || []), ...prev]);
       setHasMore(data.hasMore || false);
       setPage(nextPage);
@@ -120,16 +181,27 @@ export default function ChatPage() {
   useEffect(() => {
     if (!on) return;
     const unsub = on('new-message', (msg) => {
-      if (msg.roomId === activeRoom?._id) {
+      const isTargetActive = msg.roomId === activeRoom?._id || msg.dmId === activeRoom?._id;
+      if (isTargetActive) {
         setMessages((prev) => [...prev, msg]);
       }
-      setRooms((prev) =>
-        prev.map((r) =>
-          r._id === msg.roomId
-            ? { ...r, lastMessage: msg.content, lastMessageAt: msg.createdAt }
-            : r
-        )
-      );
+      if (msg.roomId) {
+        setRooms((prev) =>
+          prev.map((r) =>
+            r._id === msg.roomId
+              ? { ...r, lastMessage: msg.content, lastMessageAt: msg.createdAt }
+              : r
+          )
+        );
+      } else if (msg.dmId) {
+        setDmConversations((prev) =>
+          prev.map((d) =>
+            d._id === msg.dmId
+              ? { ...d, lastMessage: msg.content, lastMessageAt: msg.createdAt }
+              : d
+          )
+        );
+      }
     });
     return unsub;
   }, [on, activeRoom?._id]); // eslint-disable-line
@@ -184,6 +256,15 @@ export default function ChatPage() {
   const handleRoomCreated = (newRoom) => {
     setRooms((prev) => [newRoom, ...prev]);
     selectRoom(newRoom);
+  };
+
+  const handleDmCreated = (enrichedDm) => {
+    setDmConversations((prev) => {
+      const exists = prev.some((d) => d._id === enrichedDm._id);
+      if (exists) return prev;
+      return [enrichedDm, ...prev];
+    });
+    selectRoom(enrichedDm);
   };
 
   const handleRoomDeleted = (deletedRoomId) => {
@@ -247,6 +328,8 @@ export default function ChatPage() {
               activeRoom={activeRoom}
               onSelectRoom={selectRoom}
               onRoomCreated={handleRoomCreated}
+              dmConversations={dmConversations}
+              onDmCreated={handleDmCreated}
               loadingRooms={loadingRooms}
               currentUser={user}
               onClose={() => setSidebarOpen(false)}

@@ -9,7 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import Logo from '../common/Logo';
 import './Sidebar.css';
 
-export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated, loading, currentUser }) {
+export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated, dmConversations = [], onDmCreated, loading, currentUser }) {
   const { connected } = useSocket();
   const { logout } = useAuth();
   const [search, setSearch] = useState('');
@@ -17,6 +17,12 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // DM States
+  const [showNewDm, setShowNewDm] = useState(false);
+  const [dmSearch, setDmSearch] = useState('');
+  const [dmResults, setDmResults] = useState([]);
+  const [searchingDm, setSearchingDm] = useState(false);
 
   const filteredRooms = rooms.filter(
     (r) =>
@@ -45,6 +51,46 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
     }
   }, [newRoomName, newRoomDesc, onRoomCreated]);
 
+  const handleDmSearchChange = async (val) => {
+    setDmSearch(val);
+    if (val.trim().length < 2) {
+      setDmResults([]);
+      return;
+    }
+    setSearchingDm(true);
+    try {
+      const { data } = await api.get(`/api/users/search?q=${val.trim()}`);
+      setDmResults((data.users || []).filter((u) => u.id !== currentUser?.id));
+    } catch {
+      setDmResults([]);
+    } finally {
+      setSearchingDm(false);
+    }
+  };
+
+  const handleStartDm = async (otherUser) => {
+    const loadingToast = toast.loading(`Starting DM with ${otherUser.username}...`);
+    try {
+      const { data } = await api.post('/api/dm/conversations', { userId: otherUser.id });
+      const enrichedDm = {
+        ...data.conversation,
+        _id: data.conversation._id,
+        name: otherUser.username,
+        avatarUrl: otherUser.avatarUrl,
+        isOnline: otherUser.isOnline,
+        isDM: true,
+        otherUser: otherUser
+      };
+      onDmCreated(enrichedDm);
+      setShowNewDm(false);
+      setDmSearch('');
+      setDmResults([]);
+      toast.success(`DM started!`, { id: loadingToast });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to start DM', { id: loadingToast });
+    }
+  };
+
   return (
     <div className="sidebar">
       {/* Search */}
@@ -61,15 +107,26 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
       </div>
 
       {/* New Room button */}
-      <div className="sidebar__new-room-btn-wrap">
+      <div className="sidebar__new-room-btn-wrap" style={{ display: 'flex', gap: 8, padding: '0 16px', marginBottom: 12 }}>
         <motion.button
           id="new-room-btn"
           className="sidebar__new-room-btn"
-          onClick={() => setShowNewRoom(!showNewRoom)}
+          style={{ flex: 1 }}
+          onClick={() => { setShowNewRoom(!showNewRoom); setShowNewDm(false); }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
         >
-          <span>+</span> New Room
+          <span>+</span> Room
+        </motion.button>
+        <motion.button
+          id="new-dm-btn"
+          className="sidebar__new-room-btn"
+          style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          onClick={() => { setShowNewDm(!showNewDm); setShowNewRoom(false); }}
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.06)' }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <span>+</span> Direct Msg
         </motion.button>
       </div>
 
@@ -120,8 +177,60 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
         )}
       </AnimatePresence>
 
+      {/* New DM Search Form */}
+      <AnimatePresence>
+        {showNewDm && (
+          <motion.div
+            className="sidebar__new-room-form"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+          >
+            <input
+              type="text"
+              placeholder="Type username (min 2 chars)..."
+              value={dmSearch}
+              onChange={(e) => handleDmSearchChange(e.target.value)}
+              className="sidebar__form-input"
+              style={{ marginBottom: 8 }}
+            />
+            {searchingDm && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0' }}>🔍 Searching users...</p>}
+            
+            {dmResults.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 150, overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 4 }}>
+                {dmResults.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => handleStartDm(user)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                      padding: '6px 10px', background: 'none', border: 'none',
+                      borderRadius: 6, cursor: 'pointer', textAlign: 'left', color: 'white'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 10, color: 'white', overflow: 'hidden' }}>
+                      {user.avatarUrl ? <img src={user.avatarUrl} alt={user.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.username[0].toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{user.username}</span>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: user.isOnline ? '#22c55e' : 'var(--text-muted)', marginLeft: 'auto' }} />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {dmSearch.trim().length >= 2 && dmResults.length === 0 && !searchingDm && (
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0', textAlign: 'center' }}>No users found</p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Room list */}
-      <div className="sidebar__rooms">
+      <div className="sidebar__rooms" style={{ maxHeight: '35vh', overflowY: 'auto' }}>
         <p className="sidebar__section-label">Rooms</p>
 
         {loading ? (
@@ -139,6 +248,23 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
               room={room}
               isActive={activeRoom?._id === room._id}
               onSelect={() => onSelectRoom(room)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* DM List */}
+      <div className="sidebar__rooms" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 12, marginTop: 12, maxHeight: '35vh', overflowY: 'auto' }}>
+        <p className="sidebar__section-label">Direct Messages</p>
+        {dmConversations.length === 0 ? (
+          <div className="sidebar__empty">No active conversations. Start a DM!</div>
+        ) : (
+          dmConversations.map((dm) => (
+            <RoomItem
+              key={dm._id}
+              room={dm}
+              isActive={activeRoom?._id === dm._id}
+              onSelect={() => onSelectRoom(dm)}
             />
           ))
         )}

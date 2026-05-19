@@ -31,9 +31,12 @@ export function SocketProvider({ children }) {
     };
   }, []);
 
-  const sendMessage = useCallback((roomId, content, type = 'text', replyTo = null) => {
+  const sendMessage = useCallback((roomIdOrDmId, content, type = 'text', replyTo = null, isDM = false) => {
     if (socketRef.current) {
-      socketRef.current.emit('send-message', { roomId, content, type, replyTo });
+      const payload = isDM
+        ? { dmId: roomIdOrDmId, content, type, replyTo }
+        : { roomId: roomIdOrDmId, content, type, replyTo };
+      socketRef.current.emit('send-message', payload);
     }
   }, []);
 

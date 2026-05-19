@@ -176,7 +176,7 @@ app.get('/api/users/:id', authMiddleware, asyncHandler(async (req, res) => {
   if (cached) return res.json({ user: JSON.parse(cached) });
 
   const result = await pool.query(
-    'SELECT id, username, email, avatar_url, bio, is_online, created_at FROM users WHERE id = $1',
+    'SELECT id, username, email, avatar_url, banner_url, bio, is_online, created_at FROM users WHERE id = $1',
     [req.params.id]
   );
 
@@ -188,6 +188,7 @@ app.get('/api/users/:id', authMiddleware, asyncHandler(async (req, res) => {
     username: u.username,
     email: u.email,
     avatarUrl: u.avatar_url,
+    bannerUrl: u.banner_url,
     bio: u.bio,
     isOnline: u.is_online,
     createdAt: u.created_at,
@@ -207,6 +208,7 @@ app.put('/api/users/:id', authMiddleware, asyncHandler(async (req, res) => {
     username: Joi.string().alphanum().min(3).max(30).optional(),
     bio: Joi.string().max(200).optional().allow(''),
     avatarUrl: Joi.string().uri().optional().allow(''),
+    bannerUrl: Joi.string().uri().optional().allow(''),
   });
 
   const { error, value } = schema.validate(req.body);
@@ -227,16 +229,17 @@ app.put('/api/users/:id', authMiddleware, asyncHandler(async (req, res) => {
   if (value.username !== undefined) { fields.push(`username = $${idx++}`); values.push(value.username.toLowerCase()); }
   if (value.bio !== undefined) { fields.push(`bio = $${idx++}`); values.push(value.bio); }
   if (value.avatarUrl !== undefined) { fields.push(`avatar_url = $${idx++}`); values.push(value.avatarUrl); }
+  if (value.bannerUrl !== undefined) { fields.push(`banner_url = $${idx++}`); values.push(value.bannerUrl); }
   fields.push(`updated_at = NOW()`);
   values.push(req.params.id);
 
   const result = await pool.query(
-    `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, username, email, avatar_url, bio, created_at`,
+    `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, username, email, avatar_url, banner_url, bio, created_at`,
     values
   );
 
   const u = result.rows[0];
-  const user = { id: u.id, username: u.username, email: u.email, avatarUrl: u.avatar_url, bio: u.bio, createdAt: u.created_at };
+  const user = { id: u.id, username: u.username, email: u.email, avatarUrl: u.avatar_url, bannerUrl: u.banner_url, bio: u.bio, createdAt: u.created_at };
 
   // Invalidate cache
   await redisClient.del(`user:profile:${req.params.id}`).catch(() => {});
@@ -335,6 +338,7 @@ async function start() {
   try {
     await redisClient.connect();
     await pool.connect();
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url TEXT;').catch(() => {});
     logger.info('User service dependencies connected');
 
     app.listen(PORT, '0.0.0.0', () => {

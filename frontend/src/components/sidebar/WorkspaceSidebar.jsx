@@ -7,7 +7,7 @@ import Sidebar from '../chat/Sidebar';
 import { Logo } from '../common/Logo';
 import { useSocket } from '../../context/SocketContext';
 
-export default function WorkspaceSidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated, loadingRooms, currentUser, onClose }) {
+export default function WorkspaceSidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated, dmConversations = [], onDmCreated, loadingRooms, currentUser, onClose }) {
   const { connected } = useSocket();
 
   return (
@@ -49,6 +49,8 @@ export default function WorkspaceSidebar({ rooms, activeRoom, onSelectRoom, onRo
           activeRoom={activeRoom}
           onSelectRoom={onSelectRoom}
           onRoomCreated={onRoomCreated}
+          dmConversations={dmConversations}
+          onDmCreated={onDmCreated}
           loading={loadingRooms}
           currentUser={currentUser}
         />

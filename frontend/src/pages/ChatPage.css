@@ -8,7 +8,7 @@
   height: 100vh;
   height: 100dvh; /* Dynamic viewport height for mobile browsers */
   overflow: hidden;
-  background: radial-gradient(at 0% 0%, #0a0b10 0%, #050608 100%);
+  background: var(--bg-primary);
   position: relative;
 }
 
@@ -32,9 +32,9 @@
   flex-shrink: 0;
   height: 100%;
   overflow: hidden;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--border-subtle);
   z-index: 10;
-  background: rgba(13, 17, 28, 0.7);
+  background: var(--bg-secondary);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   display: flex;
@@ -58,8 +58,8 @@
   flex-shrink: 0;
   height: 100%;
   overflow-y: auto;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(13, 17, 28, 0.75);
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }

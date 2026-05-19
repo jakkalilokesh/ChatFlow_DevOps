@@ -145,13 +145,13 @@ export default function ChatArea({
         setInput,
         openGiphy:     () => setShowGiphy(true),
         openPoll:      () => setShowPoll(true),
-        sendMessage:   (content) => sendMessage?.(room._id, content, 'text', null),
+        sendMessage:   (content) => sendMessage?.(room._id, content, 'text', null, room.isDM),
         currentRoom:   room,
       });
       if (handled) { setInput(''); setSlashCmds([]); return; }
     }
 
-    sendMessage?.(room._id, text, 'text', replyTo?._id || null);
+    sendMessage?.(room._id, text, 'text', replyTo?._id || null, room.isDM);
     setInput('');
     setReplyTo(null);
     setSlashCmds([]);
@@ -174,13 +174,13 @@ export default function ChatArea({
 
   const handleGifSelect = (gif) => {
     if (!room || !connected) return;
-    sendMessage?.(room._id, gif.url, 'gif', null);
+    sendMessage?.(room._id, gif.url, 'gif', null, room.isDM);
     setShowGiphy(false);
   };
 
   const handlePollSubmit = (pollData) => {
     if (!room || !connected) return;
-    sendMessage?.(room._id, JSON.stringify(pollData), 'poll', null);
+    sendMessage?.(room._id, JSON.stringify(pollData), 'poll', null, room.isDM);
     setShowPoll(false);
   };
 
@@ -318,11 +318,17 @@ export default function ChatArea({
       <div className="chat-header">
         <button id="toggle-sidebar-btn" className="chat-header__icon-btn touch-target" onClick={onToggleSidebar} title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}>☰</button>
         <div className="chat-header__info">
-          <div className="chat-header__room-icon">{room.name[0].toUpperCase()}</div>
+          <div className="chat-header__room-icon" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {room.isDM && room.avatarUrl ? (
+              <img src={room.avatarUrl} alt={room.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              room.name[0].toUpperCase()
+            )}
+          </div>
           <div>
-            <h2 className="chat-header__room-name"># {room.name}</h2>
+            <h2 className="chat-header__room-name">{room.isDM ? '@' : '#'} {room.name}</h2>
             <p className="chat-header__room-meta">
-              {room.memberCount || 0} members
+              {room.isDM ? 'Direct Message' : `${room.memberCount || 0} members`}
               {typingList.length > 0 && (
                 <span className="chat-header__typing">
                   {' · '}
@@ -447,7 +453,7 @@ export default function ChatArea({
             id="chat-input"
             ref={textareaRef}
             className="chat-textarea"
-            placeholder={connected ? `Message #${room.name} — type / for commands` : 'Connecting…'}
+            placeholder={connected ? `Message ${room.isDM ? '@' : '#'}${room.name} — type / for commands` : 'Connecting…'}
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
