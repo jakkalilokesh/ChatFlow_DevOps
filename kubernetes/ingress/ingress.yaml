@@ -23,10 +23,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - 3-26-196-59.nip.io
+        - 34-234-215-6.nip.io
       secretName: chatflow-tls-secret
   rules:
-    - host: 3-26-196-59.nip.io
+    - host: 34-234-215-6.nip.io
       http:
         paths:
           # Auth service
