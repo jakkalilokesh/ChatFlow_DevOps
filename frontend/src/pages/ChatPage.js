@@ -7,7 +7,6 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import WorkspaceSidebar from '../components/sidebar/WorkspaceSidebar';
 import ChatArea from '../components/chat/ChatArea';
 import RoomInfoPanel from '../components/chat/RoomInfoPanel';
-import AIAssistantButton from '../components/ai/AIAssistantButton';
 import { Logo } from '../components/common/Logo';
 import api from '../services/api';
 import './ChatPage.css';
@@ -233,8 +232,7 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* ── AI FAB ──────────────────────────────────────── */}
-      <AIAssistantButton currentRoom={activeRoom} />
+
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
       {isMobile && !activeRoom && (

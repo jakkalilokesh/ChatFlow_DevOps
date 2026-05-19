@@ -3,7 +3,6 @@ import { useMediaQuery, useVisualViewport } from '../hooks/useMediaQuery';
 import { useGesture } from '@use-gesture/react';
 import WorkspaceSidebar from '../components/sidebar/WorkspaceSidebar';
 import ChatArea from '../components/chat/ChatArea';
-import AIAssistantButton from '../components/ai/AIAssistantButton';
 import { useLocation, Link } from 'react-router-dom';
 
 // Mobile bottom nav item
@@ -102,8 +101,7 @@ export default function AppLayout({ currentRoom }) {
         <ChatArea currentRoom={currentRoom} />
       </main>
 
-      {/* ── AI FAB ────────────────────────────────────────── */}
-      <AIAssistantButton currentRoom={currentRoom} />
+
 
       {/* ── Mobile bottom nav ────────────────────────────── */}
       {isMobile && (
