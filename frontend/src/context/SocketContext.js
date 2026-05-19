@@ -67,6 +67,7 @@ export function SocketProvider({ children }) {
     <SocketContext.Provider value={{
       socket: socketRef.current,
       isConnected,
+      connected: isConnected,
       connectionError,
       onlineUsers,
     }}>
