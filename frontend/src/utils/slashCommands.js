@@ -2,6 +2,7 @@
  * Slash Commands Registry
  * All commands available via '/' in the chat input.
  */
+import { API_URL } from '../config';
 
 export const SLASH_COMMANDS = [
   { name: '/gif',        desc: 'Search and send a GIF',           icon: '🎬' },
@@ -69,7 +70,7 @@ export function executeSlashCommand(cmdName, args, ctx) {
 
     case '/imagine':
       if (args) {
-        fetch('/ai/imagine', {
+        fetch(`${API_URL}/ai/imagine`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('chatflow_token')}` },
           body: JSON.stringify({ prompt: args }),
@@ -106,8 +107,11 @@ function parseAndSetReminder(args, roomId) {
   const [, amount, unit, note] = match;
   const ms = { s: 1000, m: 60000, h: 3600000, d: 86400000 }[unit.toLowerCase()];
   if (!ms) return;
+  const reminderText = note || "Time's up!";
   setTimeout(() => {
-    const toast = window.__CHATFLOW_TOAST__;
-    if (toast) toast(`⏰ Reminder: ${note || 'Time\'s up!'}`, { duration: 8000 });
+    // Fire a custom event so the app's Toaster (react-hot-toast) can pick it up
+    window.dispatchEvent(
+      new CustomEvent('chatflow:reminder', { detail: { text: `⏰ Reminder: ${reminderText}` } })
+    );
   }, parseInt(amount, 10) * ms);
 }

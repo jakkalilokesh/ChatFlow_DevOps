@@ -62,13 +62,18 @@ export function SocketProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!token || !user) return;
+    const activeToken = localStorage.getItem('chatflow_token');
+    if (!activeToken || !user) return;
 
     const socket = io(
       SOCKET_URL || window.location.origin,
       {
         path:        '/socket.io/',
-        auth:        { token },
+        auth: {
+          get token() {
+            return localStorage.getItem('chatflow_token');
+          }
+        },
         transports:  ['websocket', 'polling'],
         reconnection:         true,
         reconnectionAttempts: 5,

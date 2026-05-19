@@ -97,6 +97,11 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
 app.use(express.json({ limit: '1mb' }));
 
+// asyncHandler must be declared before any route that uses it
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
 // Health / metrics routes (above rate limiters)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'user-service', timestamp: new Date().toISOString() });
@@ -115,12 +120,6 @@ app.get('/metrics', asyncHandler(async (req, res) => {
 
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use(limiter);
-
-function asyncHandler(fn) {
-  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-}
-
-
 
 // ── User Routes ──────────────────────────────────────────
 

@@ -16,7 +16,7 @@ export async function ollamaChat(messages, onChunk, model = DEFAULT_MODEL) {
         stream:  true,
         options: { temperature: 0.7, num_ctx: 4096 },
       }),
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(120000), // 120 s — LLM inference can take a while
     });
 
     if (!response.ok) throw new Error(`Ollama status: ${response.statusText}`);
@@ -82,7 +82,7 @@ export async function ollamaGenerate(prompt, model = DEFAULT_MODEL) {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ model, prompt, stream: false }),
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(90000), // 90 s for single-shot generation
     });
     if (!res.ok) throw new Error(`Ollama status: ${res.statusText}`);
     const data = await res.json();

@@ -82,14 +82,28 @@ export default function AIAssistantButton({ currentRoom }) {
     setSummary('');
     try {
       const token = localStorage.getItem('chatflow_token');
+      // Fetch the latest 50 messages from the room
+      const msgRes = await fetch(`${API_URL}/api/chat/rooms/${currentRoom._id}/messages?page=1&limit=50`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!msgRes.ok) throw new Error('Failed to fetch channel messages');
+      const msgData = await msgRes.json();
+      
+      // Map senderUsername to username for the AI service
+      const messages = (msgData.messages || []).map(m => ({
+        username: m.senderUsername || m.username || 'User',
+        content: m.content || '',
+      }));
+
       const res   = await fetch(`${API_URL}/ai/summarize`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body:    JSON.stringify({ channelId: currentRoom._id, channelName: currentRoom.name }),
+        body:    JSON.stringify({ messages, channelName: currentRoom.name, type: 'channel' }),
       });
       const data = await res.json();
       setSummary(data.summary || 'No summary available.');
-    } catch {
+    } catch (err) {
+      console.error(err);
       setSummary('⚠️ Summarization failed. AI service may be offline.');
     } finally {
       setStreaming(false);

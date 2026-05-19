@@ -108,6 +108,10 @@ const emailLimiter = rateLimit({
   message: { error: 'Too many email requests. Please wait an hour.' },
 });
 
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
 // Health check routes (above rate limiters)
 app.get('/health', (req, res) =>
   res.json({ status: 'ok', service: 'auth-service', timestamp: new Date().toISOString() })
@@ -146,10 +150,6 @@ const loginSchema = Joi.object({
 });
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
-
-function asyncHandler(fn) {
-  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-}
 
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');

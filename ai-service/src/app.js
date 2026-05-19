@@ -108,7 +108,7 @@ app.post('/ai/summarize', requireAuth, asyncHandler(async (req, res) => {
 
   const formatted = messages
     .slice(-50)
-    .map((m) => `${m.username}: ${m.content}`)
+    .map((m) => `${m.username || m.senderUsername || 'User'}: ${m.content}`)
     .join('\n');
 
   const prompt = `Summarize the following ${type} chat messages from "${channelName}" in 3-5 concise bullet points. Focus on key decisions, action items, and topics discussed:\n\n${formatted}\n\nSummary:`;

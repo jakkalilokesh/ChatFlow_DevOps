@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
@@ -87,6 +88,16 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    const handleReminder = (e) => {
+      if (e.detail?.text) {
+        toast.success(e.detail.text, { duration: 8000, icon: '⏰' });
+      }
+    };
+    window.addEventListener('chatflow:reminder', handleReminder);
+    return () => window.removeEventListener('chatflow:reminder', handleReminder);
+  }, []);
+
   return (
     <ThemeProvider>
       <Router>
