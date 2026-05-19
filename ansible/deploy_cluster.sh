@@ -77,20 +77,23 @@ EOF
 
 # ── Step 4: Apply Kubernetes Labels & Annotations ──────────────────────────
 echo "🏷️ Step 4: Applying workload scheduling labels on Master..."
+
+# Retrieve system hostnames from nodes (these are registered directly as Kubernetes node names)
+AI_NODE=$(ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ubuntu@$WORKER_AI_IP "hostname")
+BACKEND_NODE=$(ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ubuntu@$WORKER_BACKEND_IP "hostname")
+SUPPORT_NODE=$(ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ubuntu@$WORKER_SUPPORT_IP "hostname")
+
+echo "Targeting Hostnames: AI=$AI_NODE, Backend=$BACKEND_NODE, Support=$SUPPORT_NODE"
+
 ssh -i "$SSH_KEY" ubuntu@$MASTER_IP << EOF
   # Wait for all nodes to report as Ready
   echo "Waiting for all nodes to report Ready status..."
   sleep 15
   
-  # Get hostnames dynamically
-  AI_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_AI_IP'")].metadata.name}')
-  BACKEND_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_BACKEND_IP'")].metadata.name}')
-  SUPPORT_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_SUPPORT_IP'")].metadata.name}')
-  
   # Label the nodes
-  kubectl label node \$AI_NODE node-role.kubernetes.io/worker=ai --overwrite
-  kubectl label node \$BACKEND_NODE node-role.kubernetes.io/worker=backend --overwrite
-  kubectl label node \$SUPPORT_NODE node-role.kubernetes.io/worker=support --overwrite
+  kubectl label node "$AI_NODE" node-role.kubernetes.io/worker=ai --overwrite
+  kubectl label node "$BACKEND_NODE" node-role.kubernetes.io/worker=backend --overwrite
+  kubectl label node "$SUPPORT_NODE" node-role.kubernetes.io/worker=support --overwrite
 
   # Setup standard namespaces
   kubectl create namespace production || true
