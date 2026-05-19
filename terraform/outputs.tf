@@ -14,3 +14,14 @@ output "rds_endpoint" {
   description = "PostgreSQL RDS Endpoint"
   value       = aws_db_instance.postgres.endpoint
 }
+
+output "s3_access_key_id" {
+  description = "IAM Access Key ID for S3 uploads"
+  value       = aws_iam_access_key.s3_media_key.id
+}
+
+output "s3_secret_access_key" {
+  description = "IAM Secret Access Key for S3 uploads"
+  value       = aws_iam_access_key.s3_media_key.secret
+  sensitive   = true
+}

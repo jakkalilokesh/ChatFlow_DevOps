@@ -76,3 +76,42 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
   tags = { Name = "${var.project_name}-ec2-profile" }
 }
+
+# ── IAM User for Microservice S3 Uploads ─────────────────
+resource "aws_iam_user" "s3_media_user" {
+  name = "${var.project_name}-s3-media-user"
+  tags = { Name = "${var.project_name}-s3-media-user" }
+}
+
+resource "aws_iam_policy" "s3_media_policy" {
+  name        = "${var.project_name}-s3-media-policy"
+  description = "Allows ChatFlow microservices to read/write media assets in S3"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.media_assets.arn,
+          "${aws_s3_bucket.media_assets.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy_attachment" "s3_media_attach" {
+  user       = aws_iam_user.s3_media_user.name
+  policy_arn = aws_iam_policy.s3_media_policy.arn
+}
+
+resource "aws_iam_access_key" "s3_media_key" {
+  user = aws_iam_user.s3_media_user.name
+}
