@@ -6,6 +6,7 @@ set -euo pipefail
 IMAGE_TAG="${1:-$(git rev-parse --short HEAD 2>/dev/null || echo latest)}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:?AWS_ACCOUNT_ID must be set}"
+AWS_ACCOUNT_ID=$(echo "${AWS_ACCOUNT_ID}" | tr -d '[:space:]' | tr -d '\r')
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT="chat-app"
 

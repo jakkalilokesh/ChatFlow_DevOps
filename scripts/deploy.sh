@@ -7,6 +7,7 @@ NAMESPACE="${1:-production}"
 IMAGE_TAG="${2:-latest}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-}"
+AWS_ACCOUNT_ID=$(echo "${AWS_ACCOUNT_ID}" | tr -d '[:space:]' | tr -d '\r')
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT="chat-app"
 
