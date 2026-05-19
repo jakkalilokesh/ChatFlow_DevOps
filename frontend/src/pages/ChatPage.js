@@ -147,16 +147,16 @@ export default function ChatPage() {
           <motion.aside
             key="sidebar"
             className="chat-layout__sidebar"
-            initial={isMobile ? { x: -280 } : { x: 0 }}
+            initial={isMobile ? { x: -300 } : { x: 0 }}
             animate={{ x: 0 }}
-            exit={isMobile ? { x: -280 } : { x: 0 }}
+            exit={isMobile ? { x: -300 } : { x: 0 }}
             transition={{ duration: 0.28, ease: 'easeInOut' }}
             style={{
-              width: 272,
+              width: 290,
               flexShrink: 0,
               ...(isMobile ? {
                 position: 'fixed', left: 0, top: 0,
-                height: '100%', zIndex: 50,
+                height: '100%', zIndex: 250,
               } : {
                 position: 'relative',
               }),
@@ -181,41 +181,9 @@ export default function ChatPage() {
         style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           minWidth: 0, overflow: 'hidden',
-          paddingBottom: isMobile ? 'calc(60px + env(safe-area-inset-bottom))' : 0,
+          paddingBottom: (isMobile && !activeRoom) ? 'calc(60px + env(safe-area-inset-bottom))' : 0,
         }}
       >
-        {/* Mobile header */}
-        {isMobile && (
-          <header style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 16px', borderBottom: '1px solid var(--border-subtle)',
-            background: 'var(--bg-secondary)', flexShrink: 0,
-          }}>
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="touch-target"
-              aria-label="Open sidebar"
-              style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              ☰
-            </button>
-            {activeRoom ? (
-              <span style={{ fontWeight: 600 }}># {activeRoom.name}</span>
-            ) : (
-              <Logo size={24} />
-            )}
-            {activeRoom && (
-              <button
-                onClick={() => setInfoPanelOpen(!infoPanelOpen)}
-                style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}
-                aria-label="Room info"
-              >
-                ℹ️
-              </button>
-            )}
-          </header>
-        )}
-
         <ChatArea
           room={activeRoom}
           messages={messages}
@@ -259,7 +227,7 @@ export default function ChatPage() {
       <AIAssistantButton currentRoom={activeRoom} />
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
-      {isMobile && (
+      {isMobile && !activeRoom && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
           background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)',
