@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ollama
-  namespace: chatflow
+  namespace: production
   labels:
     app: ollama
 spec:
@@ -49,7 +49,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ollama
-  namespace: chatflow
+  namespace: production
 spec:
   selector:
     app: ollama
@@ -62,7 +62,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: ollama-pvc
-  namespace: chatflow
+  namespace: production
 spec:
   accessModes: [ReadWriteOnce]
   resources:
