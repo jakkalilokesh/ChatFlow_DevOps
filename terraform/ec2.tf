@@ -41,7 +41,7 @@ resource "aws_instance" "k3s_master" {
 # 🧠 Worker Node 1: AI (Runs Ollama, AI services)
 resource "aws_instance" "k3s_worker_ai" {
   ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.medium" # 4GB RAM to run local Ollama
+  instance_type               = "t3.small" # t3.small is allowed on the account
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k3s_sg.id]
   key_name                    = aws_key_pair.key.key_name
