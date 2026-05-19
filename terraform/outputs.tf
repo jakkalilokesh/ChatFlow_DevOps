@@ -25,3 +25,29 @@ output "s3_secret_access_key" {
   value       = aws_iam_access_key.s3_media_key.secret
   sensitive   = true
 }
+
+output "jenkins_ip" {
+  description = "Public IP of the Jenkins server"
+  value       = aws_instance.jenkins.public_ip
+}
+
+output "k3s_master_ip" {
+  description = "Public IP of the K3s Master"
+  value       = aws_instance.k3s_master.public_ip
+}
+
+output "k3s_worker_ai_ip" {
+  description = "Public IP of the AI Worker node"
+  value       = aws_instance.k3s_worker_ai.public_ip
+}
+
+output "k3s_worker_backend_ip" {
+  description = "Public IP of the Backend Worker node"
+  value       = aws_instance.k3s_worker_backend.public_ip
+}
+
+output "k3s_worker_support_ip" {
+  description = "Public IP of the Support Worker node"
+  value       = aws_instance.k3s_worker_support.public_ip
+}
+
