@@ -29,12 +29,13 @@ chmod 400 "$SSH_KEY" || true
 
 # ── Step 1: Install K3s Control Plane on Master ─────────────────────────────
 echo "👑 Step 1: Installing K3s Master Control Plane on $MASTER_IP..."
-ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ubuntu@$MASTER_IP << 'EOF'
+ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ubuntu@$MASTER_IP << EOF
   sudo curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.30.1+k3s1" sh -s - \
     --write-kubeconfig-mode 644 \
     --disable traefik \
     --cluster-cidr 10.42.0.0/16 \
-    --service-cidr 10.43.0.0/16
+    --service-cidr 10.43.0.0/16 \
+    --tls-san "$MASTER_IP"
   
   # Wait for API server to come online
   until kubectl get nodes &> /dev/null; do
