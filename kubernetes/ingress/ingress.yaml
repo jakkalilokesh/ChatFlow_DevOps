@@ -61,6 +61,14 @@ spec:
                 name: user-service
                 port:
                   number: 3003
+          # Upload service (handled by user-service)
+          - path: /api/upload
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 3003
           # Notification service (REST + WebSocket presence)
           - path: /api/notify
             pathType: Prefix

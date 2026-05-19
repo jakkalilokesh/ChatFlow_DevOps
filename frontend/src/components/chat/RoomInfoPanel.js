@@ -35,7 +35,7 @@ export default function RoomInfoPanel({ room, onClose, onRoomDeleted, bgVideo, o
               bio: userRes.data.user.bio
             };
           } catch {
-            return { ...m, username: `User (${m.id.slice(0, 6)})` };
+            return { ...m, username: `User (${m.id?.slice ? m.id.slice(0, 6) : 'Unknown'})` };
           }
         })
       );
@@ -53,7 +53,7 @@ export default function RoomInfoPanel({ room, onClose, onRoomDeleted, bgVideo, o
               avatarUrl: userRes.data.user.avatarUrl
             };
           } catch {
-            return { id: uid, username: `User (${uid.slice(0, 6)})` };
+            return { id: uid, username: `User (${uid?.slice ? uid.slice(0, 6) : 'Unknown'})` };
           }
         })
       );

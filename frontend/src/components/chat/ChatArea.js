@@ -231,7 +231,7 @@ export default function ChatArea({
     );
   }, [currentUser]);
 
-  const isMember = room?.members?.includes(currentUser?.id) || room?.createdBy === currentUser?.id;
+  const isMember = room?.type === 'public' || room?.members?.includes(currentUser?.id) || room?.createdBy === currentUser?.id;
   const [localPending, setLocalPending] = useState(false);
 
   useEffect(() => {

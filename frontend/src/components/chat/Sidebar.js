@@ -16,6 +16,7 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
   const [showNewRoom, setShowNewRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
+  const [newRoomType, setNewRoomType] = useState('public');
   const [creating, setCreating] = useState(false);
 
   // DM States
@@ -37,11 +38,12 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
       const { data } = await api.post('/api/chat/rooms', {
         name: newRoomName.trim(),
         description: newRoomDesc.trim(),
-        type: 'public',
+        type: newRoomType,
       });
       onRoomCreated(data.room);
       setNewRoomName('');
       setNewRoomDesc('');
+      setNewRoomType('public');
       setShowNewRoom(false);
       toast.success(`Room "${data.room.name}" created!`);
     } catch (err) {
@@ -49,7 +51,7 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
     } finally {
       setCreating(false);
     }
-  }, [newRoomName, newRoomDesc, onRoomCreated]);
+  }, [newRoomName, newRoomDesc, newRoomType, onRoomCreated]);
 
   const handleDmSearchChange = async (val) => {
     setDmSearch(val);
@@ -159,6 +161,34 @@ export default function Sidebar({ rooms, activeRoom, onSelectRoom, onRoomCreated
               className="sidebar__form-input"
               maxLength={100}
             />
+            <div className="sidebar__form-type" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <button
+                type="button"
+                style={{
+                  flex: 1, padding: '8px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  border: newRoomType === 'public' ? '1px solid #7c6ff7' : '1px solid rgba(255,255,255,0.08)',
+                  background: newRoomType === 'public' ? 'rgba(124, 111, 247, 0.15)' : 'none',
+                  color: newRoomType === 'public' ? '#8b5cf6' : 'var(--text-muted)',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setNewRoomType('public')}
+              >
+                🌍 Public
+              </button>
+              <button
+                type="button"
+                style={{
+                  flex: 1, padding: '8px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  border: newRoomType === 'private' ? '1px solid #7c6ff7' : '1px solid rgba(255,255,255,0.08)',
+                  background: newRoomType === 'private' ? 'rgba(124, 111, 247, 0.15)' : 'none',
+                  color: newRoomType === 'private' ? '#8b5cf6' : 'var(--text-muted)',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setNewRoomType('private')}
+              >
+                🔒 Private
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-ghost" style={{ flex: 1, padding: '8px', fontSize: 13 }} onClick={() => setShowNewRoom(false)}>
                 Cancel

@@ -47,7 +47,7 @@ data:
   # WebRTC
   RTC_MIN_PORT:         "40000"
   RTC_MAX_PORT:         "49999"
-  ANNOUNCED_IP:         "44.203.161.187"
+  ANNOUNCED_IP:         "34.234.215.6"
   # 2FA issuer
   TOTP_ISSUER:          "ChatFlow"
   # SMTP

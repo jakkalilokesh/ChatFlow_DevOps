@@ -298,7 +298,7 @@ app.post('/api/upload/presign', authMiddleware, asyncHandler(async (req, res) =>
 
   // Use a single media bucket with prefix paths, or multiple buckets depending on setup.
   // Here we use the S3_BUCKET as the main bucket, and use the 'bucket' param as a folder prefix.
-  const ALLOWED_FOLDERS = ['avatars', 'attachments', 'voice-notes', 'thumbnails'];
+  const ALLOWED_FOLDERS = ['avatars', 'attachments', 'voice-notes', 'thumbnails', 'banners'];
   if (!ALLOWED_FOLDERS.includes(bucket)) return res.status(400).json({ message: 'Invalid folder' });
 
   try {
