@@ -66,23 +66,17 @@ Write-Host "🏷️ Step 4: Applying workload scheduling labels on Master..." -F
 Write-Host "Waiting for all nodes to report Ready status..." -ForegroundColor Gray
 Start-Sleep -Seconds 15
 
-# Label Worker Nodes
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_AI_IP\")].metadata.name}') node-role.kubernetes.io/worker=ai --overwrite"
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_BACKEND_IP\")].metadata.name}') node-role.kubernetes.io/worker=backend --overwrite"
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_SUPPORT_IP\")].metadata.name}') node-role.kubernetes.io/worker=support --overwrite"
+# Copy helper setup script to master node
+Write-Host "📤 Copying cluster label script to Master..." -ForegroundColor Gray
+scp $ssh_opts setup_k3s.sh ubuntu@${MASTER_IP}:/home/ubuntu/setup_k3s.sh
 
-# Create standard namespaces
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace production || true"
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace staging || true"
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace monitoring || true"
-
-# Deploy Nginx Ingress Controller on Support Node
-ssh $ssh_opts ubuntu@$MASTER_IP "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml"
-
+# Run the helper script on master
+Write-Host "🚀 Executing label and ingress configurations on Master..." -ForegroundColor Gray
+ssh $ssh_opts ubuntu@${MASTER_IP} "bash /home/ubuntu/setup_k3s.sh $WORKER_AI_IP $WORKER_BACKEND_IP $WORKER_SUPPORT_IP"
 
 # ── Step 5: Save Local Kubeconfig ───────────────────────────────────────────
 Write-Host "💾 Step 5: Copying kubeconfig for local cluster access..." -ForegroundColor Yellow
-scp -i $SSH_KEY ubuntu@$MASTER_IP:/etc/rancher/k3s/k3s.yaml chatflow-k3s.yaml
+scp -i $SSH_KEY ubuntu@${MASTER_IP}:/etc/rancher/k3s/k3s.yaml chatflow-k3s.yaml
 
 # Clean up local config file replacing 127.0.0.1 with Master Public IP
 $content = Get-Content -Path chatflow-k3s.yaml
@@ -94,3 +88,4 @@ Write-Host "🎉 Congratulations! ChatFlow Multi-Node K3s Cluster is Live!" -For
 Write-Host "======================================================================" -ForegroundColor Green
 Write-Host "Local kubeconfig saved to: ./ansible/chatflow-k3s.yaml" -ForegroundColor Green
 Write-Host "======================================================================" -ForegroundColor Green
+
