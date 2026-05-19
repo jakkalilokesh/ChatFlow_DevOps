@@ -95,9 +95,10 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 script {
+                    def cleanRegistry = ECR_REGISTRY.toString().trim().replaceAll("\\s+", "")
                     // ECR login
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-
+                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${cleanRegistry}"
+ 
                     def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
                     services.each { svc ->
                         // Ensure ECR repo exists (idempotent — safe to call if already exists)
@@ -107,11 +108,11 @@ pipeline {
                                 --image-scanning-configuration scanOnPush=true \
                                 --encryption-configuration encryptionType=AES256
                         """
-
+ 
                         def localTag  = "${PROJECT}-${svc}:${IMAGE_TAG}"
-                        def remoteTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:${IMAGE_TAG}"
-                        def latestTag = "${ECR_REGISTRY}/${PROJECT}-${svc}:latest"
-
+                        def remoteTag = "${cleanRegistry}/${PROJECT}-${svc}:${IMAGE_TAG}"
+                        def latestTag = "${cleanRegistry}/${PROJECT}-${svc}:latest"
+ 
                         sh """
                             docker tag  ${localTag} ${remoteTag}
                             docker tag  ${localTag} ${latestTag}
