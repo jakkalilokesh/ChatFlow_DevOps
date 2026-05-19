@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { SOCKET_URL } from '../config';
 
 const SocketContext = createContext(null);
 
@@ -17,7 +18,7 @@ export function SocketProvider({ children }) {
     if (!token || !user) return;
 
     const socket = io(
-      process.env.REACT_APP_WS_URL || process.env.REACT_APP_SOCKET_URL || window.location.origin,
+      SOCKET_URL || window.location.origin,
       {
         path:        '/socket.io/',
         auth:        { token },

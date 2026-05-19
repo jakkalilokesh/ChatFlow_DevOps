@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '',
+  baseURL: API_URL || '',
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
@@ -47,7 +48,7 @@ api.interceptors.response.use(
 
         if (!refreshToken) throw new Error('No refresh token');
 
-        const res      = await axios.post(`${process.env.REACT_APP_API_URL || ''}/auth/refresh`, { refreshToken });
+        const res      = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
         const newToken = res.data.token;
         const newRt    = res.data.refreshToken;
 

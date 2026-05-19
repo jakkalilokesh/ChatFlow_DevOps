@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/common/Logo';
 import { AnimatedMesh } from '../components/ui/AnimatedBackground';
+import { API_URL } from '../config';
 
 export default function LoginPage() {
   const { login }                = useAuth();
@@ -15,8 +16,6 @@ export default function LoginPage() {
   const [error,    setError]     = useState('');
   const [showPwd,  setShowPwd]   = useState(false);
   const [searchParams]           = useSearchParams();
-
-  const API_URL = process.env.REACT_APP_API_URL || '';
 
   const urlError   = searchParams.get('error');
   const verified   = searchParams.get('verified');

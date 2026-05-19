@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/common/Logo';
 import { AnimatedMesh } from '../components/ui/AnimatedBackground';
+import { API_URL } from '../config';
 
 const AVATARS = ['🦊','🐼','🦁','🐯','🦋','🐧','🦄','🐸','🦅','🐺','🦀','🐬','🦜','🦩','🐙','🐻','🦊','🐮','🦖','🐘'];
 
@@ -18,8 +19,6 @@ export default function RegisterPage() {
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState('');
   const [showPwd,   setShowPwd]   = useState(false);
-
-  const API_URL = process.env.REACT_APP_API_URL || '';
 
   const strength = () => {
     let s = 0;

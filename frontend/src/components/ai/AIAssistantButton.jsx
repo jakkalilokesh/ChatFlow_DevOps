@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const API_URL = process.env.REACT_APP_API_URL || '';
+import { API_URL } from '../../config';
 
 export default function AIAssistantButton({ currentRoom }) {
   const [open,      setOpen]      = useState(false);
