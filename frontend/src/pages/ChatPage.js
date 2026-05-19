@@ -131,7 +131,17 @@ export default function ChatPage() {
 
   // ── Layout ───────────────────────────────────────────────
   return (
-    <div className="chat-layout" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <div className="chat-layout" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', position: 'relative' }}>
+
+      {/* Ambient Video Background */}
+      <video
+        className="chat-layout__bg-video"
+        src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31908-large.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
 
       {/* ── Mobile overlay ──────────────────────────────── */}
       {isMobile && sidebarOpen && (

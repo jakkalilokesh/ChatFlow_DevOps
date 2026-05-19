@@ -12,6 +12,20 @@
   position: relative;
 }
 
+/* Global Ambient background video */
+.chat-layout__bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0.04; /* perfectly subtle and extremely premium */
+  pointer-events: none;
+  mix-blend-mode: color-dodge;
+  filter: saturate(1.2) contrast(1.1);
+}
+
 /* ─── Sidebar (channel/DM list) ─────────────────── */
 .chat-layout__sidebar {
   width: 280px;

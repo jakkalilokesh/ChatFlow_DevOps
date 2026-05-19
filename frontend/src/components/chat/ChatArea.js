@@ -226,16 +226,6 @@ export default function ChatArea({
   return (
     <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
-      {/* Background Video */}
-      <video
-        className="chat-area__bg-video"
-        src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31908-large.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-      />
-
       {/* ── Header ────────────────────────────────────────── */}
       <div className="chat-header">
         <button id="toggle-sidebar-btn" className="chat-header__icon-btn touch-target" onClick={onToggleSidebar} title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}>☰</button>
