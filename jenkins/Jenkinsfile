@@ -210,13 +210,17 @@ pipeline {
                         bash scripts/rollback.sh \$NAMESPACE || true
                     """
                 }
-                echo "⚠️ Email notification skipped: SMTP not configured."
+                mail to: 'lokesh.j.g13cs@gmail.com',
+                     subject: "❌ ChatFlow Build Failed: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                     body: "The ChatFlow deployment pipeline failed and triggered a rollback.\n\nPlease check the console output here: ${env.BUILD_URL}"
             }
         }
         success {
             script {
                 echo "🚀 ChatFlow ${IMAGE_TAG} deployed successfully!"
-                echo "⚠️ Email notification skipped: SMTP not configured."
+                mail to: 'lokesh.j.g13cs@gmail.com',
+                     subject: "✅ ChatFlow Build Succeeded: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                     body: "The ChatFlow deployment pipeline completed successfully!\n\nImage Tag: ${IMAGE_TAG}\nView the build logs here: ${env.BUILD_URL}"
             }
         }
         cleanup {
