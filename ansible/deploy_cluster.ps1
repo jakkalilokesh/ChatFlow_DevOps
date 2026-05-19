@@ -66,27 +66,19 @@ Write-Host "🏷️ Step 4: Applying workload scheduling labels on Master..." -F
 Write-Host "Waiting for all nodes to report Ready status..." -ForegroundColor Gray
 Start-Sleep -Seconds 15
 
-$label_cmd = @"
-  # Get hostnames dynamically
-  AI_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_AI_IP'")].metadata.name}')
-  BACKEND_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_BACKEND_IP'")].metadata.name}')
-  SUPPORT_NODE=\$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type=="ExternalIP")].address=="'$WORKER_SUPPORT_IP'")].metadata.name}')
-  
-  # Label the nodes
-  kubectl label node \$AI_NODE node-role.kubernetes.io/worker=ai --overwrite
-  kubectl label node \$BACKEND_NODE node-role.kubernetes.io/worker=backend --overwrite
-  kubectl label node \$SUPPORT_NODE node-role.kubernetes.io/worker=support --overwrite
+# Label Worker Nodes
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_AI_IP\")].metadata.name}') node-role.kubernetes.io/worker=ai --overwrite"
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_BACKEND_IP\")].metadata.name}') node-role.kubernetes.io/worker=backend --overwrite"
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl label node \$(kubectl get nodes -o jsonpath='{.items[?(@.status.addresses[?(@.type==\"ExternalIP\")].address==\"$WORKER_SUPPORT_IP\")].metadata.name}') node-role.kubernetes.io/worker=support --overwrite"
 
-  # Setup standard namespaces
-  kubectl create namespace production || true
-  kubectl create namespace staging || true
-  kubectl create namespace monitoring || true
-  
-  # Deploy Nginx Ingress Controller on Support Node
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
-"@
+# Create standard namespaces
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace production || true"
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace staging || true"
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl create namespace monitoring || true"
 
-ssh $ssh_opts ubuntu@$MASTER_IP $label_cmd
+# Deploy Nginx Ingress Controller on Support Node
+ssh $ssh_opts ubuntu@$MASTER_IP "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml"
+
 
 # ── Step 5: Save Local Kubeconfig ───────────────────────────────────────────
 Write-Host "💾 Step 5: Copying kubeconfig for local cluster access..." -ForegroundColor Yellow
