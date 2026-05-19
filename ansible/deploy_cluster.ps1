@@ -48,17 +48,17 @@ Write-Host "🧠 Step 3: Provisioning Worker Nodes..." -ForegroundColor Yellow
 
 # 3.1 AI Node
 Write-Host "⚡ Joining AI Worker node ($WORKER_AI_IP)..." -ForegroundColor Yellow
-ssh $ssh_opts ubuntu@$WORKER_AI_IP "sudo curl -sfL https://get.k3s.io | K3S_URL=https://$MASTER_PRIVATE_IP:6443 K3S_TOKEN=$K3S_TOKEN sh -s -"
+ssh $ssh_opts ubuntu@$WORKER_AI_IP "sudo env K3S_URL=https://${MASTER_PRIVATE_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -c 'curl -sfL https://get.k3s.io | sh -s -'"
 Write-Host "✅ AI Worker successfully joined!" -ForegroundColor Green
 
 # 3.2 Backend Node
 Write-Host "⚡ Joining Backend Worker node ($WORKER_BACKEND_IP)..." -ForegroundColor Yellow
-ssh $ssh_opts ubuntu@$WORKER_BACKEND_IP "sudo curl -sfL https://get.k3s.io | K3S_URL=https://$MASTER_PRIVATE_IP:6443 K3S_TOKEN=$K3S_TOKEN sh -s -"
+ssh $ssh_opts ubuntu@$WORKER_BACKEND_IP "sudo env K3S_URL=https://${MASTER_PRIVATE_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -c 'curl -sfL https://get.k3s.io | sh -s -'"
 Write-Host "✅ Backend Worker successfully joined!" -ForegroundColor Green
 
 # 3.3 Support Node
 Write-Host "⚡ Joining Support Worker node ($WORKER_SUPPORT_IP)..." -ForegroundColor Yellow
-ssh $ssh_opts ubuntu@$WORKER_SUPPORT_IP "sudo curl -sfL https://get.k3s.io | K3S_URL=https://$MASTER_PRIVATE_IP:6443 K3S_TOKEN=$K3S_TOKEN sh -s -"
+ssh $ssh_opts ubuntu@$WORKER_SUPPORT_IP "sudo env K3S_URL=https://${MASTER_PRIVATE_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -c 'curl -sfL https://get.k3s.io | sh -s -'"
 Write-Host "✅ Support Worker successfully joined!" -ForegroundColor Green
 
 # ── Step 4: Apply Kubernetes Labels & Annotations ──────────────────────────
