@@ -4,6 +4,8 @@ metadata:
   name: chatflow-ingress
   namespace: production
   annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size:       "10m"
     nginx.ingress.kubernetes.io/proxy-read-timeout:    "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout:    "3600"
@@ -14,16 +16,18 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-origin:     "https://chat-flow-dev-ops.vercel.app,https://chatflow.app"
     nginx.ingress.kubernetes.io/cors-allow-methods:    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers:    "Authorization, Content-Type, X-Requested-With"
-    nginx.ingress.kubernetes.io/cors-allow-credentials:"true"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     # WebSocket support for Socket.io
     nginx.ingress.kubernetes.io/proxy-http-version:    "1.1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "Upgrade";
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - 3-26-196-59.nip.io
+      secretName: chatflow-tls-secret
   rules:
-    - http:
+    - host: 3-26-196-59.nip.io
+      http:
         paths:
           # Auth service
           - path: /auth
