@@ -174,6 +174,23 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
 app.use(express.json({ limit: '10mb' }));
 
+// Health / Ready check endpoints (above rate limiter to avoid probes failing with 429)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'chat-service', timestamp: new Date().toISOString() });
+});
+
+app.get('/ready', asyncHandler(async (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  if (dbState !== 1) throw new Error('MongoDB not connected');
+  await redisClient.ping();
+  res.json({ status: 'ready', timestamp: new Date().toISOString() });
+}));
+
+app.get('/metrics', asyncHandler(async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+}));
+
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use(limiter);
 
@@ -394,21 +411,6 @@ io.on('connection', (socket) => {
 
 // ── REST Endpoints ───────────────────────────────────────
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'chat-service', timestamp: new Date().toISOString() });
-});
-
-app.get('/ready', asyncHandler(async (req, res) => {
-  const dbState = mongoose.connection.readyState;
-  if (dbState !== 1) throw new Error('MongoDB not connected');
-  await redisClient.ping();
-  res.json({ status: 'ready', timestamp: new Date().toISOString() });
-}));
-
-app.get('/metrics', asyncHandler(async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-}));
 
 // GET /api/chat/rooms
 app.get('/api/chat/rooms', authMiddleware, asyncHandler(async (req, res) => {

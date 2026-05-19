@@ -31,6 +31,25 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '4mb' }));
 
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
+// Health check routes (above rate limiters)
+app.get('/health', (req, res) =>
+  res.json({ status: 'ok', service: 'ai-service', timestamp: new Date().toISOString() })
+);
+
+app.get('/ready', asyncHandler(async (req, res) => {
+  const ollama = await ollamaHealth();
+  res.json({ status: 'ready', ollama });
+}));
+
+app.get('/metrics', asyncHandler(async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+}));
+
 const limiter = rateLimit({ windowMs: 60000, max: 30, message: { error: 'Rate limit exceeded' } });
 app.use(limiter);
 
@@ -46,24 +65,7 @@ function requireAuth(req, res, next) {
   }
 }
 
-function asyncHandler(fn) {
-  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-}
 
-// ── Health / Metrics ─────────────────────────────────────
-app.get('/health', (req, res) =>
-  res.json({ status: 'ok', service: 'ai-service', timestamp: new Date().toISOString() })
-);
-
-app.get('/ready', asyncHandler(async (req, res) => {
-  const ollama = await ollamaHealth();
-  res.json({ status: 'ready', ollama });
-}));
-
-app.get('/metrics', asyncHandler(async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-}));
 
 // ── POST /ai/chat — streaming AI assistant ───────────────
 app.post('/ai/chat', requireAuth, asyncHandler(async (req, res) => {

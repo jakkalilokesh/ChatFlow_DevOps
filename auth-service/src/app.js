@@ -108,6 +108,22 @@ const emailLimiter = rateLimit({
   message: { error: 'Too many email requests. Please wait an hour.' },
 });
 
+// Health check routes (above rate limiters)
+app.get('/health', (req, res) =>
+  res.json({ status: 'ok', service: 'auth-service', timestamp: new Date().toISOString() })
+);
+
+app.get('/ready', asyncHandler(async (req, res) => {
+  await pool.query('SELECT 1');
+  await redisClient.ping();
+  res.json({ status: 'ready', timestamp: new Date().toISOString() });
+}));
+
+app.get('/metrics', asyncHandler(async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+}));
+
 app.use(globalLimiter);
 app.use('/auth/login',               authLimiter);
 app.use('/auth/register',            authLimiter);
@@ -143,21 +159,7 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-// ── Health ───────────────────────────────────────────────
-app.get('/health', (req, res) =>
-  res.json({ status: 'ok', service: 'auth-service', timestamp: new Date().toISOString() })
-);
 
-app.get('/ready', asyncHandler(async (req, res) => {
-  await pool.query('SELECT 1');
-  await redisClient.ping();
-  res.json({ status: 'ready', timestamp: new Date().toISOString() });
-}));
-
-app.get('/metrics', asyncHandler(async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-}));
 
 // ── OAuth Routes ─────────────────────────────────────────
 app.use('/auth', oauthRouter);

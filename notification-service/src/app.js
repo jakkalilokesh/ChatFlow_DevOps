@@ -24,6 +24,9 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*', methods: ['GET', 'POST', 'PUT'] }));
 app.use(express.json({ limit: '256kb' }));
 
+// ── Routes ──────────────────────────────────────────────
+app.use('/', healthRoutes);
+
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
 app.use(limiter);
 
@@ -35,8 +38,7 @@ const io = new Server(server, {
 app.set('io', io); // make it accessible to express req.app.get('io')
 setupSockets(io);
 
-// ── Routes ──────────────────────────────────────────────
-app.use('/', healthRoutes);
+// ── API Routes ───────────────────────────────────────────
 app.use('/api/notify', notificationRoutes);
 
 // ── Global Error Handler ─────────────────────────────────
