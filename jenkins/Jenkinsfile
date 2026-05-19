@@ -8,7 +8,7 @@ pipeline {
         IMAGE_TAG        = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
         PROJECT          = 'chat-app'
         KUBECONFIG       = credentials('kubeconfig')
-        SERVICES         = 'auth-service chat-service user-service notification-service call-service ai-service'
+        SERVICES         = 'auth-service chat-service user-service notification-service call-service'
     }
 
     options {
@@ -63,9 +63,6 @@ pipeline {
 
                     echo "Building Call Service..."
                     sh "docker build -t ${PROJECT}-call-service:${IMAGE_TAG} ./call-service/"
-
-                    echo "Building AI Service..."
-                    sh "docker build -t ${PROJECT}-ai-service:${IMAGE_TAG} ./ai-service/"
                 }
             }
         }
@@ -73,7 +70,7 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
+                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
                     services.each { svc ->
                         sh """
                             docker run --rm \
@@ -99,7 +96,7 @@ pipeline {
                     // ECR login
                     sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${cleanRegistry}"
  
-                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service', 'ai-service']
+                    def services = ['auth-service', 'chat-service', 'user-service', 'notification-service', 'call-service']
                     services.each { svc ->
                         // Ensure ECR repo exists (idempotent — safe to call if already exists)
                         sh """

@@ -77,14 +77,7 @@ spec:
                 name: call-service
                 port:
                   number: 3005
-          # AI service (streaming SSE + chat)
-          - path: /ai
-            pathType: Prefix
-            backend:
-              service:
-                name: ai-service
-                port:
-                  number: 3006
+
           # Keys endpoint (auth-service E2EE)
           - path: /api/keys
             pathType: Prefix

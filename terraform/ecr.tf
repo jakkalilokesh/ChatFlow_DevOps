@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "services" {
-  for_each             = toset(["auth-service", "chat-service", "user-service", "notification-service", "call-service", "ai-service"])
+  for_each             = toset(["auth-service", "chat-service", "user-service", "notification-service", "call-service"])
   name                 = "chat-app-${each.key}"
   image_tag_mutability = "MUTABLE"
 

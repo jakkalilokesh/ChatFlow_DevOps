@@ -17,7 +17,6 @@ SERVICES=(
   "user-service"
   "notification-service"
   "call-service"
-  "ai-service"
 )
 
 K8S_SERVICES=(
@@ -26,7 +25,6 @@ K8S_SERVICES=(
   "user-service"
   "notification-service"
   "call-service"
-  "ai-service"
 )
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }

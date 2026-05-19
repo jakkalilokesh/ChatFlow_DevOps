@@ -66,15 +66,7 @@ data:
           - targets: ['user-service.chatflow.svc.cluster.local:3003']
         metrics_path: /metrics
 
-      - job_name: 'ai-service'
-        static_configs:
-          - targets: ['ai-service.chatflow.svc.cluster.local:3006']
-        metrics_path: /metrics
 
-      - job_name: 'ollama'
-        static_configs:
-          - targets: ['ollama.chatflow.svc.cluster.local:11434']
-        metrics_path: /metrics
 
 
   alerts.yml: |

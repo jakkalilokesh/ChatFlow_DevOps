@@ -16,7 +16,6 @@ SERVICES=(
   "user-service:./user-service"
   "notification-service:./notification-service"
   "call-service:./call-service"
-  "ai-service:./ai-service"
 )
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }

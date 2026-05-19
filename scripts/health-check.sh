@@ -16,7 +16,6 @@ SERVICES=(
   "user-service:3003"
   "notification-service:3004"
   "call-service:3005"
-  "ai-service:3006"
 )
 
 log "=== ChatFlow Health Check ==="
