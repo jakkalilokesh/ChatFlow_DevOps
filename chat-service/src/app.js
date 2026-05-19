@@ -390,6 +390,24 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('user-stopped-typing', { userId, roomId });
   });
 
+  // call:signal — relay WebRTC signaling data (offer, answer, candidates) to other peer(s)
+  socket.on('call:signal', ({ roomId, dmId, signal, to }) => {
+    const targetRoom = roomId || dmId;
+    if (to) {
+      io.to(to).emit('call:signal', { senderId: userId, signal });
+    } else if (targetRoom) {
+      socket.to(targetRoom).emit('call:signal', { senderId: userId, signal });
+    }
+  });
+
+  // call:action — relay ringing, accept, reject or hangup events
+  socket.on('call:action', ({ roomId, dmId, action, type, callerId }) => {
+    const targetRoom = roomId || dmId;
+    if (targetRoom) {
+      socket.to(targetRoom).emit('call:action', { senderId: userId, username, action, type, callerId });
+    }
+  });
+
   // mark-read
   socket.on('mark-read', async ({ roomId }) => {
     if (!roomId) return;

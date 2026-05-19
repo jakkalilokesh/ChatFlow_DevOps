@@ -9,6 +9,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import PageLoader from './components/common/PageLoader';
 import ScrollToTop from './components/common/ScrollToTop';
 import CommandPalette from './components/CommandPalette';
+import { CallProvider } from './context/CallContext';
+import CallScreen from './components/chat/CallScreen';
 
 // ── Lazy-loaded pages ───────────────────────────────────
 const LandingPage         = lazy(() => import('./pages/LandingPage'));
@@ -65,14 +67,20 @@ function AppRoutes() {
         <Route path="/chat" element={
           <PrivateRoute>
             <SocketProvider>
-              <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
+              <CallProvider>
+                <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
+                <CallScreen />
+              </CallProvider>
             </SocketProvider>
           </PrivateRoute>
         } />
         <Route path="/chat/:roomId" element={
           <PrivateRoute>
             <SocketProvider>
-              <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
+              <CallProvider>
+                <Suspense fallback={<PageLoader />}><ChatPage /></Suspense>
+                <CallScreen />
+              </CallProvider>
             </SocketProvider>
           </PrivateRoute>
         } />

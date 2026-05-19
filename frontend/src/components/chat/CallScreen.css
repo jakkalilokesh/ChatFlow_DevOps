@@ -1,0 +1,300 @@
+/* ═══════════════════════════════════════════════
+   CallScreen Styling — State-of-the-Art calling UI
+   ═══════════════════════════════════════════════ */
+
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 10, 16, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  color: white;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Call states: ringing or dialing */
+.call-ringing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.call-ringing-avatar-glow {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.call-ringing-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 12px 40px rgba(124, 111, 247, 0.4);
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.call-ringing-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Elegant Pulsing Glow Rings */
+.call-pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(124, 111, 247, 0.3);
+  animation: pulseOut 2s infinite ease-in-out;
+  z-index: 1;
+}
+
+.call-pulse-ring:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.call-pulse-ring:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes pulseOut {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.call-ringing-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+  text-align: center;
+  font-family: var(--font-heading);
+}
+
+.call-ringing-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Call Actions Panels */
+.call-ringing-actions {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.call-ringing-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all var(--transition-spring);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.call-ringing-btn--accept {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.call-ringing-btn--accept:hover {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
+}
+
+.call-ringing-btn--decline {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
+.call-ringing-btn--decline:hover {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 12px 32px rgba(239, 68, 68, 0.5);
+}
+
+/* Call active stream window viewports */
+.call-active-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.call-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.call-remote-video--audio-only {
+  display: none;
+}
+
+.call-audio-avatar-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 2;
+}
+
+/* Picture-in-picture floating view */
+.call-local-pip {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  width: 240px;
+  height: 150px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  overflow: hidden;
+  background: rgba(10, 15, 30, 0.9);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.call-local-pip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Interactive Overlay Toolbar controls */
+.call-controls-bar {
+  position: absolute;
+  bottom: 48px;
+  z-index: 20;
+  background: rgba(13, 17, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-full);
+  padding: 12px 32px;
+  display: flex;
+  gap: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.call-control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  background: rgba(255, 255, 255, 0.06);
+  transition: all var(--transition-spring);
+}
+
+.call-control-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.call-control-btn--active {
+  background: rgba(124, 111, 247, 0.25);
+  border: 1.5px solid rgba(124, 111, 247, 0.5);
+  color: #a5b4fc;
+}
+
+.call-control-btn--hangup {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.call-control-btn--hangup:hover {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+/* Call duration badge */
+.call-duration-badge {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  background: rgba(13, 17, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  color: #a5b4fc;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .call-local-pip {
+    top: auto;
+    bottom: 140px;
+    right: 20px;
+    width: 140px;
+    height: 90px;
+  }
+
+  .call-controls-bar {
+    bottom: 32px;
+    padding: 10px 20px;
+    gap: 12px;
+  }
+
+  .call-control-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .call-duration-badge {
+    top: 24px;
+    left: 20px;
+  }
+}

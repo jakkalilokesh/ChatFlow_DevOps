@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { useSocket } from '../../context/SocketContext';
+import { useCall } from '../../context/CallContext';
 import MessageBubble from './MessageBubble';
 import VirtualMessageList from './VirtualMessageList';
 import GiphyPicker from './GiphyPicker';
@@ -52,6 +53,7 @@ export default function ChatArea({
   onToggleSidebar, onToggleInfo, sidebarOpen,
 }) {
   const { sendMessage, startTyping, stopTyping, typingUsers, connected } = useSocket();
+  const { initiateCall } = useCall();
   const [input,      setInput]      = useState('');
   const [showEmoji,  setShowEmoji]  = useState(false);
   const [showGiphy,  setShowGiphy]  = useState(false);
@@ -224,6 +226,16 @@ export default function ChatArea({
   return (
     <div className="chat-area" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
+      {/* Background Video */}
+      <video
+        className="chat-area__bg-video"
+        src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31908-large.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+
       {/* ── Header ────────────────────────────────────────── */}
       <div className="chat-header">
         <button id="toggle-sidebar-btn" className="chat-header__icon-btn touch-target" onClick={onToggleSidebar} title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}>☰</button>
@@ -245,6 +257,27 @@ export default function ChatArea({
             </p>
           </div>
         </div>
+
+        {/* WebRTC Calling Buttons */}
+        <div style={{ display: 'flex', gap: 8, marginRight: 8 }}>
+          <button
+            className="chat-header__icon-btn touch-target"
+            onClick={() => initiateCall(room._id, 'audio')}
+            title="Voice Call"
+            style={{ fontSize: 16 }}
+          >
+            📞
+          </button>
+          <button
+            className="chat-header__icon-btn touch-target"
+            onClick={() => initiateCall(room._id, 'video')}
+            title="Video Call"
+            style={{ fontSize: 16 }}
+          >
+            📹
+          </button>
+        </div>
+
         <button id="toggle-info-btn" className="chat-header__icon-btn touch-target" onClick={onToggleInfo} title="Room info">ℹ️</button>
       </div>
 
