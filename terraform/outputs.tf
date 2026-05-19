@@ -26,11 +26,6 @@ output "s3_secret_access_key" {
   sensitive   = true
 }
 
-output "jenkins_ip" {
-  description = "Public IP of the Jenkins server"
-  value       = aws_instance.jenkins.public_ip
-}
-
 output "k3s_master_ip" {
   description = "Public IP of the K3s Master"
   value       = aws_instance.k3s_master.public_ip
