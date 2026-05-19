@@ -24,7 +24,7 @@ Write-Host "====================================================================
 
 # Configure SSH key permissions if needed (Windows SSH Client requires closed permissions or bypass warnings)
 # Strict Host Key checking disabled for easy automation
-$ssh_opts = "-o StrictHostKeyChecking=no -i $SSH_KEY"
+$ssh_opts = @("-o", "StrictHostKeyChecking=no", "-i", $SSH_KEY)
 
 # ── Step 1: Install K3s Control Plane on Master ─────────────────────────────
 Write-Host "👑 Step 1: Installing K3s Master Control Plane on $MASTER_IP..." -ForegroundColor Yellow
