@@ -15,9 +15,7 @@ sudo apt-get update -y
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release unzip
 
 sudo mkdir -p /etc/apt/keyrings
-if [ ! -f /etc/apt/keyrings/docker.asc ]; then
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.asc
-fi
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
@@ -34,9 +32,7 @@ echo "✅ Docker successfully installed!"
 echo "👑 Step 2: Installing Java 21 and Jenkins..."
 sudo apt-get install -y openjdk-21-jdk
 
-if [ ! -f /etc/apt/keyrings/jenkins-keyring.asc ]; then
-  curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo gpg --dearmor -o /etc/apt/keyrings/jenkins-keyring.asc
-fi
+sudo curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key -o /etc/apt/keyrings/jenkins-keyring.asc
 
 echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 
