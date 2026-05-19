@@ -43,13 +43,14 @@ export async function ollamaChat(messages, onChunk, model = DEFAULT_MODEL) {
   } catch (err) {
     if (process.env.HF_API_TOKEN) {
       console.log('🔄 Local Ollama offline. Falling back to Hugging Face serverless (Qwen2.5-7B-Instruct)...');
-      const hfRes = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct/v1/chat/completions', {
+      const hfRes = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          model: 'Qwen/Qwen2.5-7B-Instruct',
           messages: messages,
           temperature: 0.7,
           max_tokens: 1024,
@@ -89,13 +90,14 @@ export async function ollamaGenerate(prompt, model = DEFAULT_MODEL) {
   } catch (err) {
     if (process.env.HF_API_TOKEN) {
       console.log('🔄 Local Ollama offline. Falling back to Hugging Face serverless (Qwen2.5-7B-Instruct)...');
-      const hfRes = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct/v1/chat/completions', {
+      const hfRes = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          model: 'Qwen/Qwen2.5-7B-Instruct',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.7,
           max_tokens: 1024,
