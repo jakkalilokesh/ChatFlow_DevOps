@@ -69,7 +69,7 @@ Real_Time_Chat_App/
 
 ### 1. Clone & Setup
 ```bash
-git clone https://github.com/yourusername/chatflow.git
+git clone https://github.com/jakkalilokesh/chatflow.git
 cd chatflow
 chmod +x scripts/*.sh
 ./scripts/setup.sh
